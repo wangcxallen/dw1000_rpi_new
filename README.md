@@ -1,5 +1,5 @@
-# dw1000_bbb
-DW1000 &amp; BBB App
+# dw1000_rpi
+DW1000 &amp; RPI App
 
 Please download DW1000 API from http://www.decawave.com/support/software. Copy
 api files (decadriver) to src. Make and enjoy!
@@ -8,22 +8,11 @@ api files (decadriver) to src. Make and enjoy!
 
 # Quick
 
-    cd overlay
-    ./build_overlay
-    cd ..
-    src/setup_dw1000.sh
+    sudo rpi_config
+    enable SPI
+    cd dw1000_rpi/src
     make clean
     make <app_name>
-
-## Compiling and Loading the overlay
-
-The SPIDEV module we use requires a custom device tree overlay to be built and loaded. The device tree compile script is `overlay/build_overlay.sh`. This generates the overlay and copies it to `/lib/firmware`.
-
-Load the device tree overlay from `/lib/firmware`. This is required by the SPIDEV module
-
-    echo DW1000-SPI0 > /sys/devices/platform/bone_capemgr/slots
-
- `src/setup_dw1000.sh` is a script to automate this. Run this once at device startup.
 
 ## Compile
 
@@ -42,9 +31,6 @@ The following applications are currently implemented:
     Output files have the naming scheme `exp<exp_number>_msg<msg_number>_I/R.csv`. The `<msg_number>` is modulo 256.
 
 # Known Quirks
-
-1. The Beaglebone make system does not like long file names (>16 characters). Make fails to behave properly with long file names.
-2. The beaglebone SPIDEV based SPI device can only transfer a limited number of bytes per transaction. This number is somewhere close to 128 (not exactly sure). In cases where more successive bytes have to be read, try to split the transfer operation into multiple chunks.
 
 # Code Sources
 

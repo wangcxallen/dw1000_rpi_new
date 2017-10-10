@@ -1,5 +1,5 @@
 CFLAGS+= -Wall -I$(INCDIR_APP_LOADER) -std=c99 -D_XOPEN_SOURCE=500 -O2 $(ARM_OPTIONS)
-LDFLAGS+=-lpthread -lm
+LDFLAGS+=-lpthread -lm -lwiringPi
 
 dw1000-objs := platform.o deca_device.o deca_params_init.o
 

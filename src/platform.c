@@ -26,21 +26,22 @@
 #include <string.h>
 #include "deca_regs.h"
 
+#include <errno.h>
+#include <wiringPi.h>
+
 #define SPI_SPEED_SLOW    				( 3000000)
 #define SPI_SPEED_FAST  	  			(10000000)
-#define SPI_PATH 						"/dev/spidev1.0"
+#define SPI_PATH 						"/dev/spidev0.0"
 
 static uint32_t mode 	= 0;
 static uint8_t bits 	= 8;
 static uint32_t speed 	= SPI_SPEED_SLOW;
-static uint16_t delay 	= 0;
+static uint16_t delay_us 	= 10;
 
 static int fd;
 
-int RSTPin = 46; /* Reset GPIO pin - GPIO1_14 or pin 16 on the P8 header */
-int IRQPin = 47; /* Reset GPIO pin - GPIO1_15 or pin 15 on the P8 header */
-FILE *resetGPIO = NULL;
-FILE *irqGPIO = NULL;
+int RSTPin = 2; // BCM27
+int IRQPin = 3; // BCM22
 
 /* Wrapper function to be used by decadriver. Declared in deca_device_api.h */
 void deca_sleep(unsigned int time_ms)
@@ -100,7 +101,7 @@ int writetospi(uint16 headerLength, const uint8 *headerBuffer, uint32 bodylength
 		.tx_buf = (unsigned long)txbuf,
 		.rx_buf = (unsigned long)rxbuf,
 		.len = headerLength+bodylength,
-		.delay_usecs = delay,
+		.delay_usecs = delay_us,
 		.speed_hz = speed,
 		.bits_per_word = bits,
 	};
@@ -138,7 +139,7 @@ int readfromspi(uint16 headerLength, const uint8 *headerBuffer, uint32 readlengt
 		.tx_buf = (unsigned long)headerBuffer,
 		.rx_buf = (unsigned long)buf,
 		.len = headerLength+readlength,
-		.delay_usecs = delay,
+		.delay_usecs = delay_us,
 		.speed_hz = speed,
 		.bits_per_word = bits,
 	};
@@ -160,53 +161,15 @@ int readfromspi(uint16 headerLength, const uint8 *headerBuffer, uint32 readlengt
 
 int hardware_init (void)
 {
-	char setValue[4], GPIOString[4], GPIOValue[64], GPIODirection[64];
-
-    // Setup RESET
-	sprintf(GPIOString, "%d", RSTPin);
-	sprintf(GPIOValue, "/sys/class/gpio/gpio%d/value", RSTPin);
-	sprintf(GPIODirection, "/sys/class/gpio/gpio%d/direction", RSTPin);
-
-    // Export the pin
-	if ((resetGPIO = fopen("/sys/class/gpio/export", "ab")) == NULL){
-		printf("Unable to export GPIO pin\n");
+	// sets up the wiringPi library
+	if (wiringPiSetup () < 0) {
+		fprintf (stderr, "Unable to setup wiringPi: %s\n", strerror (errno));
 		return 1;
 	}
-	strcpy(setValue, GPIOString);
-	fwrite(&setValue, sizeof(char), 2, resetGPIO);
-	fclose(resetGPIO);
 
-    // Set direction of the pin to an output
-	if ((resetGPIO = fopen(GPIODirection, "rb+")) == NULL){
-		printf("Unable to open direction handle\n");
-		return 1;
-	}
-	strcpy(setValue,"out");
-	fwrite(&setValue, sizeof(char), 3, resetGPIO);
-	fclose(resetGPIO);
-
-    // Setup IRQ
-	sprintf(GPIOString, "%d", IRQPin);
-	sprintf(GPIOValue, "/sys/class/gpio/gpio%d/value", IRQPin);
-	sprintf(GPIODirection, "/sys/class/gpio/gpio%d/direction", IRQPin);
-
-    // Export the pin
-	if ((irqGPIO = fopen("/sys/class/gpio/export", "ab")) == NULL){
-		printf("Unable to export GPIO pin\n");
-		return 1;
-	}
-	strcpy(setValue, GPIOString);
-	fwrite(&setValue, sizeof(char), 2, irqGPIO);
-	fclose(irqGPIO);
-
-    // Set direction of the pin to an output
-	if ((irqGPIO = fopen(GPIODirection, "rb+")) == NULL){
-		printf("Unable to open direction handle\n");
-		return 1;
-	}
-	strcpy(setValue,"in");
-	fwrite(&setValue, sizeof(char), 3, irqGPIO);
-	fclose(irqGPIO);
+	pinMode(IRQPin, INPUT);
+	pinMode(RSTPin, OUTPUT);
+	digitalWrite(RSTPin, HIGH);
 
 	// The following calls set up the SPI bus properties
 	if((fd = open(SPI_PATH, O_RDWR))<0){
@@ -242,28 +205,9 @@ int hardware_init (void)
 
 int reset_DW1000(void)
 {
-	char setValue[4], GPIOValue[64];
-	sprintf(GPIOValue, "/sys/class/gpio/gpio%d/value", RSTPin);
-
-    // Set output to low
-	if ((resetGPIO = fopen(GPIOValue, "rb+")) == NULL){
-		printf("Unable to open value handle\n");
-		return 1;
-	}
-    strcpy(setValue, "0"); // Set value low
-    fwrite(&setValue, sizeof(char), 1, resetGPIO);
-    fclose(resetGPIO);
-    sleep_ms(2);
-
-	// Set output to high
-    if ((resetGPIO = fopen(GPIOValue, "rb+")) == NULL){
-    	printf("Unable to open value handle\n");
-    	return 1;
-    }
-    strcpy(setValue, "1"); // Set value high
-    fwrite(&setValue, sizeof(char), 1, resetGPIO);
-    fclose(resetGPIO);
-    sleep_ms(2);
+	digitalWrite(RSTPin, LOW);
+	usleep(2000);
+	digitalWrite(RSTPin, HIGH);
     return 0;
 }
 
