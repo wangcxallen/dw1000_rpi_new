@@ -122,7 +122,7 @@ void copyCIRToBuffer(uint8 *buffer, uint16 len)
 /**
  * Application entry point.
  */
-int main(nargs, args)
+int main(int nargs, char** args)
 {
 
     uint8 *cir_buffer;
