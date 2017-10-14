@@ -37,7 +37,7 @@
 /***** USEFUL PARAMETERS *****/
 
 /* Inter-ranging delay period, in milliseconds. */
-#define INTER_RANGING_TIME  1000
+#define INTER_RANGING_TIME  15
 
 /* Default antenna delay values for 64 MHz PRF. See NOTE 1 below. */
 #define TX_ANT_DLY          16436
