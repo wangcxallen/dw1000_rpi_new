@@ -173,7 +173,7 @@ int main(int argc, char* argv[]) {
             mode = 'R';
         } else {
             mode = 'U';
-            printf("unrecognized mode\n");
+            printf("unrecognized mode.\n");
             exit(1);
         }
 
