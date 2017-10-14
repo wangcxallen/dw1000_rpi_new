@@ -366,12 +366,15 @@ static void initiatorTask(unsigned long exp_number, char mode) {
                 printf("start writing to %s...\n", filename);
 
                 /***** FILE OPERATIONS *****/
-                if (exp_number > 0)
+                if (exp_number > 1)
                     saveChannelInfoToFile(filename, rxInfo, &timestamps, 3, 1);
                 
                 printf("done writing\n");
                 printf("\n");
-		fflush(stdout);
+                fflush(stdout);
+
+                if (exp_number == 1)
+                    break;
             }
         }
         else
@@ -532,11 +535,14 @@ static void responderTask(unsigned long exp_number, char mode) {
                         printf("start writing to %s...\n", filename);
 
                         /***** FILE OPERATIONS *****/
-                        if (exp_number > 0)
+                        if (exp_number > 1)
                             saveChannelInfoToFile(filename, rxInfo, &timestamps, 4, 2);
                         printf("done writing\n");
                         printf("\n");
-			fflush(stdout);
+                        fflush(stdout);
+
+                        if (exp_number == 1)
+                            break;
                     }
 
                 } else {
