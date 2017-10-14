@@ -49,13 +49,13 @@
 
 /* This is the delay from Frame RX timestamp to TX reply timestamp used for calculating/setting the DW1000's delayed TX function. This includes the
  * frame length of approximately 2.66 ms with above configuration. */
-#define RX_TO_TX_DLY_UUS    20000
+#define RX_TO_TX_DLY_UUS    30000
 
 /* Preamble timeout, in multiple of PAC size. See NOTE 6 below. */
 #define PRE_TIMEOUT 8
 
 /* RX timeout for messages in same exchange */
-#define RX_TIMEOUT_UUS      20000
+#define RX_TIMEOUT_UUS      50000
 
 /* UWB microsecond (uus) to device time unit (dtu, around 15.65 ps) conversion factor.
  * 1 uus = 512 / 499.2 µs and 1 µs = 499.2 * 128 dtu. */
@@ -85,6 +85,11 @@ static dwt_config_t config = {
     DWT_BR_110K,     /* Data rate. */
     DWT_PHRMODE_STD, /* PHY header mode. */
     (1024 + 1 + 64 - 32) /* SFD timeout (preamble length + 1 + SFD length - PAC size). Used in RX only. */
+};
+
+static dwt_txconfig_t txconfig = {
+    0xC2,           /* Pulse generator delay */
+    0x1F1F1F1F      /* Max power */
 };
 
 
@@ -217,6 +222,7 @@ static void setup_dw1000(void) {
 
     /* Configure DW1000. See NOTE 7 below. */
     dwt_configure(&config);
+    //dwt_configuretxrf(&txconfig);
 
     /* Apply default antenna delay value. See NOTE 1 below. */
     dwt_setrxantennadelay(RX_ANT_DLY);
