@@ -222,7 +222,7 @@ static void setup_dw1000(void) {
 
     /* Configure DW1000. See NOTE 7 below. */
     dwt_configure(&config);
-    //dwt_configuretxrf(&txconfig);
+    dwt_configuretxrf(&txconfig);
 
     /* Apply default antenna delay value. See NOTE 1 below. */
     dwt_setrxantennadelay(RX_ANT_DLY);
