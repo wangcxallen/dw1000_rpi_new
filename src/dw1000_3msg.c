@@ -274,6 +274,9 @@ static void initiatorTask(uint8_t idCount, uint8_t cir) {
     /* Loop forever initiating ranging exchanges. */
     while (1)
     {
+        if (++id >= idCount)
+            id = 0;
+
         /* Execute a delay between ranging exchanges. */
         sleep_ms(INTER_RANGING_TIME);
 
@@ -387,9 +390,6 @@ static void initiatorTask(uint8_t idCount, uint8_t cir) {
                 printf("done writing\n");
                 printf("\n");
                 fflush(stdout);
-                
-                if (++id >= idCount)
-                    id = 0;
             }
         }
         else
