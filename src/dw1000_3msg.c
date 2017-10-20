@@ -256,7 +256,7 @@ static void initiatorTask(uint8_t idCount, uint8_t cir) {
     uint8 tx3_msg[] = {0xab, 0x02, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // size = 1+1+4+8+8+2 = 24
     uint8 rx_buffer[RX_BUF_LEN];
 
-    printf("Starting INITIATOR\n");
+    printf("Starting INITIATOR: %u\n", idCount);
 
     // allocate memory
     rxInfo = (struct completeChannelInfo *) malloc(sizeof(struct completeChannelInfo));
@@ -431,7 +431,7 @@ static void responderTask(uint8_t id, int count, uint8_t cir) {
     uint8 rx_buffer[RX_BUF_LEN]; // same size as rx2
 
     /* RESPONDER */
-    printf("Starting RESPONDER\n");
+    printf("Starting RESPONDER: %u %d\n", id, count);
 
     memset((void *) &timestamps, 0, sizeof(struct ts_struct));
 
