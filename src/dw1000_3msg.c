@@ -296,11 +296,11 @@ static void initiatorTask(uint8_t idCount, uint8_t cir) {
         ret = dwt_starttx(DWT_START_TX_DELAYED | DWT_RESPONSE_EXPECTED);
 
         if (ret == DWT_ERROR) {
-            printf("INIT %u aborted\n", exchangeNo);
+            printf("INIT %u %u aborted\n", id, exchangeNo);
             continue;
         }
 
-        printf("INIT %u scheduled\n", exchangeNo);
+        printf("INIT %u %u scheduled\n", id, exchangeNo);
 
         /* We assume that the transmission is achieved correctly, poll for reception of a frame or error/timeout. See NOTE 9 below. */
         while (!((status_reg = dwt_read32bitreg(SYS_STATUS_ID)) & (SYS_STATUS_RXFCG | SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR))) { };
@@ -322,7 +322,7 @@ static void initiatorTask(uint8_t idCount, uint8_t cir) {
 
             /* Check that the frame is the expected response from the companion "DS TWR responder" example. */
             if (memcmp(rx_buffer, rx2_msg, 6) == 0) {
-                printf("RESP %u received\n", exchangeNo);
+                printf("RESP %u %u received\n", id, exchangeNo);
                 
                 /* Retrieve poll transmission and response reception timestamp. */
                 timestamps.tx_timestamp[0] = get_tx_timestamp_u64();
@@ -348,11 +348,11 @@ static void initiatorTask(uint8_t idCount, uint8_t cir) {
                 ret = dwt_starttx(DWT_START_TX_DELAYED);
 
                 if (ret == DWT_ERROR) {
-                    printf("FINL %u aborted\n", exchangeNo);
+                    printf("FINL %u %u aborted\n", id, exchangeNo);
                     continue;
                 }
 
-                printf("FINL %u scheduled\n", exchangeNo);
+                printf("FINL %u %u scheduled\n", id, exchangeNo);
 
                 /* Poll DW1000 until TX frame sent event set. See NOTE 9 below. */
                 while (!(dwt_read32bitreg(SYS_STATUS_ID) & SYS_STATUS_TXFRS)) { };
@@ -471,7 +471,7 @@ static void responderTask(uint8_t id, int count, uint8_t cir) {
                 memcpy((void *) &exchangeNo, (void *) &rx_buffer[MSGNO_IDX], sizeof(uint8_t));    // get exchange number
                 memcpy((void *) &timestamps.tx_timestamp[0], &rx_buffer[TX1_IDX], sizeof(uint64)); // get TX timestamp from message
 
-                printf("INIT %u received\n", exchangeNo);
+                printf("INIT %u %u received\n", id, exchangeNo);
                 
                 /* Retrieve poll reception timestamp. */
                 timestamps.rx_timestamp[0] = get_rx_timestamp_u64();
@@ -496,11 +496,11 @@ static void responderTask(uint8_t id, int count, uint8_t cir) {
                 /* If dwt_starttx() returns an error, abandon this ranging exchange and proceed to the next one. See NOTE 11 below. */
                 if (ret == DWT_ERROR)
                 {
-                    printf("RESP %u abandoned\n", exchangeNo);
+                    printf("RESP %u %u abandoned\n", id, exchangeNo);
                     continue;
                 }
 
-                printf("RESP %u sent\n", exchangeNo);
+                printf("RESP %u %u sent\n", id, exchangeNo);
 
                 memset((void *) &rxInfo[0], 0, sizeof(struct completeChannelInfo));
                 copyChannelInfo(&rxInfo[0], exchangeNo);
@@ -529,7 +529,7 @@ static void responderTask(uint8_t id, int count, uint8_t cir) {
                         memcpy((void *) &timestamps.rx_timestamp[1], &rx_buffer[RX2_IDX], sizeof(uint64)); // get RX timestamp from message
                         memcpy((void *) &timestamps.tx_timestamp[2], &rx_buffer[TX3_IDX], sizeof(uint64)); // get TX timestamp from message
                     
-                        printf("FINL %u received\n", exchangeNo);
+                        printf("FINL %u %u received\n", id, exchangeNo);
 
                         memset((void *) &rxInfo[1], 0, sizeof(struct completeChannelInfo));
                         copyChannelInfo(&rxInfo[1], exchangeNo);
