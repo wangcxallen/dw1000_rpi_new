@@ -237,7 +237,7 @@ static void setup_dw1000(void) {
 
 static void initiatorTask(uint8_t idCount, uint8_t cir) {
 
-    uint8_t id = 0;
+    uint8_t id = idCount;
     uint8_t exchangeNo = 0;
     uint32 frame_len = 0;
     uint32 status_reg = 0;
