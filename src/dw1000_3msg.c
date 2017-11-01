@@ -49,7 +49,7 @@
 
 /* This is the delay from Frame RX timestamp to TX reply timestamp used for calculating/setting the DW1000's delayed TX function. This includes the
  * frame length of approximately 2.66 ms with above configuration. */
-#define RX_TO_TX_DLY_UUS    10000
+#define RX_TO_TX_DLY_UUS    20000
 
 /* Preamble timeout, in multiple of PAC size. See NOTE 6 below. */
 #define PRE_TIMEOUT 8
