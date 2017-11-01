@@ -7,9 +7,7 @@ api files (decadriver) to src. Make and enjoy!
 # Instructions
 
 # Quick
-
-    sudo rpi_config
-    enable SPI
+    sudo rpi_config -> 5 Interfacing Options -> P4 SPI -> Enable
     cd dw1000_rpi/src
     make clean
     make <app_name>

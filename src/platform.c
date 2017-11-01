@@ -31,7 +31,7 @@
 
 #define SPI_SPEED_SLOW    				( 3000000)
 #define SPI_SPEED_FAST  	  			(10000000)
-#define SPI_PATH 						"/dev/spidev0.0"
+#define SPI_PATH 						"/dev/spidev1.0"
 
 static uint32_t mode 	= 0;
 static uint8_t bits 	= 8;
