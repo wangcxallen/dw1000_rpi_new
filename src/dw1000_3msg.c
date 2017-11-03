@@ -371,6 +371,7 @@ static void initiatorTask(unsigned long exp_number, char mode) {
                 
                 printf("done writing\n");
                 printf("\n");
+		fflush(stdout);
             }
         }
         else
@@ -535,6 +536,7 @@ static void responderTask(unsigned long exp_number, char mode) {
                             saveChannelInfoToFile(filename, rxInfo, &timestamps, 4, 2);
                         printf("done writing\n");
                         printf("\n");
+			fflush(stdout);
                     }
 
                 } else {
