@@ -141,6 +141,7 @@ static void responderTask(uint8_t id, int count, uint8_t cir);
 
 static void setup_dw1000(void);
 static void copyChannelInfo(struct completeChannelInfo *info, uint32 exchange_no);
+static void printChannelInfo(struct completeChannelInfo *info);
 static void saveChannelInfoToFile(char *filename, struct completeChannelInfo *info, struct ts_struct *ts, int type, int nInfo);
 
 static uint64 get_tx_timestamp_u64(void);
@@ -534,7 +535,6 @@ static void responderTask(uint8_t id, int count, uint8_t cir) {
                         memset((void *) &rxInfo[1], 0, sizeof(struct completeChannelInfo));
                         copyChannelInfo(&rxInfo[1], exchangeNo);
 
-
                         printf("exchange,%u\n",  exchangeNo);
                         printf("TX1,%llu\n", timestamps.tx_timestamp[0]);
                         printf("RX1,%llu\n", timestamps.rx_timestamp[0]);
@@ -546,6 +546,7 @@ static void responderTask(uint8_t id, int count, uint8_t cir) {
                         tof = get_ds_tof(&timestamps);
                         printf("TOF,%f\n", tof*1e9);
                         printf("dist,%3.2f\n", tof*SPEED_OF_LIGHT);
+                        printChannelInfo(&rxInfo[1]);
 
                         snprintf(filename, 31, "exp%u_msg%u_%c.csv", id, exchangeNo, 'R');
                         printf("start writing to %s...\n", filename);
@@ -772,6 +773,24 @@ static void copyChannelInfo(struct completeChannelInfo *info, uint32 exchange_no
 
     /* Get carrier offset */
     info->carrierintegrator = dwt_readcarrierintegrator();
+}
+
+static void printChannelInfo(struct completeChannelInfo *info)
+{
+    printf("maxNoise,%u\n", info->diagnostics.maxNoise);
+    printf("stdNoise,%u\n", info->diagnostics.stdNoise);
+    printf("firstPathAmp1,%u\n", info->diagnostics.firstPathAmp1);
+    printf("firstPathAmp2,%u\n", info->diagnostics.firstPathAmp2);
+    printf("firstPathAmp3,%u\n", info->diagnostics.firstPathAmp3);
+    printf("maxGrowthCIR,%u\n", info->diagnostics.maxGrowthCIR);
+    printf("rxPreamCount,%u\n", info->diagnostics.rxPreamCount);
+    printf("firstPath,%u\n", info->diagnostics.firstPath);
+    printf("LDE_THRESH,%u\n", info->lde_thresh);
+    printf("LDE_CFG1,%u\n", info->lde_cfg1);
+    printf("LDE_PPINDX,%u\n", info->lde_ppindx);
+    printf("LDE_PPAMPL,%u\n", info->lde_ppampl);
+    printf("carrierInt,%ld\n", info->carrierintegrator);
+    printf("clockOffset,%f\n", get_clock_offset(info->carrierintegrator));
 }
 
 static void saveChannelInfoToFile(char *filename, struct completeChannelInfo *info, struct ts_struct *ts, int type, int nInfo)
