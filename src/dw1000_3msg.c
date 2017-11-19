@@ -546,9 +546,9 @@ static void responderTask(uint8_t id, int count, uint8_t cir) {
                         printf("RX3,%llu\n", timestamps.rx_timestamp[2]);
 
                         tof = get_ds_tof(&timestamps);
+                        printChannelInfo(&rxInfo[1]);
                         printf("TOF,%f\n", tof*1e9);
                         printf("dist,%3.2f\n", tof*SPEED_OF_LIGHT);
-                        printChannelInfo(&rxInfo[1]);
 
                         snprintf(filename, 31, "exp%u_msg%u_%c.csv", id, exchangeNo, 'R');
                         printf("start writing to %s...\n", filename);
