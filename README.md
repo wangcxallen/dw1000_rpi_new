@@ -21,12 +21,11 @@ The following applications are currently implemented:
 1. `dw1000_tx`: simple periodic transmitter. Takes no parameters.
 2. `dw1000_rx`: simple receiver that continuously listens for packets. Takes no parameters.
 3. `dw1000_rx_cir`: like simple receiver but also outputs the CIR (channel impulse respone) for each reception to the console. Takes no parameters.
-4. `dw1000_twr_resp`: adapted ranging application using one polling and one response message. Also outputs the entire CIR in a file. Takes 2 parameters:
-5. 
-    - `INIT` or `RESP`: Choose which device is the INITIATOR or RESPONDER
-    - `<exp_number>`: An unsigned integer used for naming the output.
-    
-    Output files have the naming scheme `exp<exp_number>_msg<msg_number>_I/R.csv`. The `<msg_number>` is modulo 256.
+4. `dw1000_twr_resp`: adapted ranging application using one polling and one response message. Also outputs the entire CIR in a file. Takes 2 parameters:  
+    - `INIT` or `RESP`: Choose which device is the INITIATOR or RESPONDER  
+    - `<exp_number>`: An unsigned integer used for naming the output.  
+    Output files have the naming scheme `exp<exp_number>_msg<msg_number>_I/R.csv`. The `<msg_number>` is modulo 256.  
+5. `radar_tx`: simple preiodic transmitter
 
 # Known Quirks
 
