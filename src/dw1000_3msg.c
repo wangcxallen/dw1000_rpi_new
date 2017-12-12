@@ -136,7 +136,7 @@ struct ts_struct {
 /***** Function declarations *****/
 
 static void copyCIRToBuffer(uint8 *buffer, uint16 len);
-static void initiatorTask(uint8_t idCount, uint8_t cir);
+static void initiatorTask(uint8_t idCount, int count, uint8_t cir);
 static void responderTask(uint8_t id, int count, uint8_t cir);
 
 static void setup_dw1000(void);
@@ -200,7 +200,7 @@ int main(int argc, char* argv[]) {
    
     if(mode == 'I') {
         // Run INITIATOR program
-        initiatorTask(id, cir);
+        initiatorTask(id, count, cir);
     } else {
         // Run RESPONDER program
         responderTask(id, count, cir);
@@ -235,10 +235,11 @@ static void setup_dw1000(void) {
 
 }
 
-static void initiatorTask(uint8_t idCount, uint8_t cir) {
+static void initiatorTask(uint8_t idCount, int count, uint8_t cir) {
 
     uint8_t id = idCount;
     uint8_t exchangeNo = 0;
+    int num_initiations = 0;
     uint32 frame_len = 0;
     uint32 status_reg = 0;
     int ret = 0;
@@ -272,8 +273,9 @@ static void initiatorTask(uint8_t idCount, uint8_t cir) {
     dwt_setrxtimeout(RX_TIMEOUT_UUS); /* Sets the receiver to timeout and disable when no frame is received within the specified time 5.30 api */
 
     /* Loop forever initiating ranging exchanges. */
-    while (1)
+    while (num_initiations < count || count < 0)
     {
+	++num_initiations;
         if (++id >= idCount)
             id = 0;
 
