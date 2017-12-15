@@ -14,12 +14,13 @@
  /*
  * Modified by:
  * Anh Luong <luong@eng.utah.edu>
+ * Adwait Dongare
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <string.h>
+#include <string.h> // memset
 
 #include "deca_device_api.h"
 #include "deca_regs.h"
@@ -34,7 +35,7 @@
 #define RADAR_FRAME_DATA_IDX 6
 
 /* Inter-frame delay period, in milliseconds. */
-#define TX_DELAY_MS 100
+#define TX_DELAY_MS 1000
 
 /**
  * Application entry point.
@@ -147,6 +148,8 @@ int main(int argc, char** argv) {
     } else {
         printf("usage: %s <experiment name> (<number of measurements>)\n", argv[0]);
     }
+
+    return(0);
 }
 
 /*****************************************************************************************************************************************************
