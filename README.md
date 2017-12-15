@@ -7,10 +7,12 @@ api files (decadriver) to src. Make and enjoy!
 # Instructions
 
 # Quick
-    sudo rpi_config -> 5 Interfacing Options -> P4 SPI -> Enable
-    cd dw1000_rpi/src
-    make clean
-    make <app_name>
+
+1. `sudo rpi_config` -> 5 Interfacing Options -> P4 SPI -> Enable
+1. add a line `dtoverlay=spi1-2cs` to `/boot/config.txt`
+1. `cd dw1000_rpi/src`
+1. `make clean`
+1. `make <app_name>`
 
 ## Compile
 
