@@ -51,7 +51,7 @@ extern const uint8 chan_idx[NUM_CH_SUPPORTED];
 extern const double txpwr_compensation[NUM_CH];
 
 #define PEAK_MULTPLIER  (0x60) //3 -> (0x3 * 32) & 0x00E0
-#define N_STD_FACTOR    (13)
+#define N_STD_FACTOR    (7)
 #define LDE_PARAM1      (PEAK_MULTPLIER | N_STD_FACTOR)
 
 #define LDE_PARAM3_16 (0x1607)
