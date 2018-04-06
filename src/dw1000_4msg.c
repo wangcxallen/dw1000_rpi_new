@@ -272,13 +272,17 @@ static void initiatorTask(uint8_t idCount, int count, uint8_t cir) {
     /* INITIATOR ONLY */
     /* Set expected response's delay and timeout. See NOTE 4, 5 and 6 below.
      * As this example only handles one incoming frame with always the same delay and timeout, those values can be set here once for all. */
-    dwt_setrxaftertxdelay(TX_TO_RX_DLY_UUS); /* Sets delay to turn on receiver after a frame transmission has completed 5.52 api */
-    dwt_setrxtimeout(RX_TIMEOUT_UUS); /* Sets the receiver to timeout and disable when no frame is received within the specified time 5.30 api */
+    // dwt_setrxaftertxdelay(TX_TO_RX_DLY_UUS); /* Sets delay to turn on receiver after a frame transmission has completed 5.52 api */
+    // dwt_setrxtimeout(RX_TIMEOUT_UUS); /* Sets the receiver to timeout and disable when no frame is received within the specified time 5.30 api */
 
     /* Loop forever initiating ranging exchanges. */
     while (num_initiations < count || count < 0)
     {
-	++num_initiations;
+
+        dwt_setrxaftertxdelay(TX_TO_RX_DLY_UUS); /* Sets delay to turn on receiver after a frame transmission has completed 5.52 api */
+        dwt_setrxtimeout(RX_TIMEOUT_UUS); /* Sets the receiver to timeout and disable when no frame is received within the specified time 5.30 api */
+
+	    ++num_initiations;
         if (++id >= idCount)
             id = 0;
 
@@ -356,7 +360,7 @@ static void initiatorTask(uint8_t idCount, int count, uint8_t cir) {
 
                 dwt_writetxdata(sizeof(tx3_msg), tx3_msg, 0); /* Zero offset in TX buffer. */
                 dwt_writetxfctrl(sizeof(tx3_msg), 0, 1); /* Zero offset in TX buffer, ranging. */
-                ret = dwt_starttx(DWT_START_TX_DELAYED);
+                ret = dwt_starttx(DWT_START_TX_DELAYED | DWT_RESPONSE_EXPECTED);
 
                 if (ret == DWT_ERROR) {
                     printf("FINL %u %u aborted\n", id, exchangeNo);
@@ -395,8 +399,6 @@ static void initiatorTask(uint8_t idCount, int count, uint8_t cir) {
                     if (memcmp(rx_buffer, rx4_msg, 6) == 0) {
                         printf("REPORT %u %u received\n", id, exchangeNo);
                 
-                        printf("REPORT: %x\n", rx_buffer);
-
                         // copy timestamps to timestamps struct
                         memcpy((void *) &timestamps.rx_timestamp[2], &rx_buffer[RX3_IDX], sizeof(uint64)); // get TX timestamp from message
                         
@@ -615,8 +617,6 @@ static void responderTask(uint8_t id, int count, uint8_t cir) {
                             printf("REPORT %u %u abandoned\n", id, exchangeNo);
                             continue;
                         }
-
-                        printf("REPORT: %x\n", tx4_msg);
                         
                         // printf("FINL %u %u received\n", id, exchangeNo);
 
