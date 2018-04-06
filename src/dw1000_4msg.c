@@ -37,7 +37,7 @@
 /***** USEFUL PARAMETERS *****/
 
 /* Inter-ranging delay period, in milliseconds. */
-#define INTER_RANGING_TIME  15
+#define INTER_RANGING_TIME  50
 
 /* Default antenna delay values for 64 MHz PRF. See NOTE 1 below. */
 #define TX_ANT_DLY          16436
@@ -49,13 +49,13 @@
 
 /* This is the delay from Frame RX timestamp to TX reply timestamp used for calculating/setting the DW1000's delayed TX function. This includes the
  * frame length of approximately 2.66 ms with above configuration. */
-#define RX_TO_TX_DLY_UUS    20000
+#define RX_TO_TX_DLY_UUS    30000
 
 /* Preamble timeout, in multiple of PAC size. See NOTE 6 below. */
 #define PRE_TIMEOUT 8
 
 /* RX timeout for messages in same exchange */
-#define RX_TIMEOUT_UUS      30000
+#define RX_TIMEOUT_UUS      40000
 
 /* UWB microsecond (uus) to device time unit (dtu, around 15.65 ps) conversion factor.
  * 1 uus = 512 / 499.2 µs and 1 µs = 499.2 * 128 dtu. */
