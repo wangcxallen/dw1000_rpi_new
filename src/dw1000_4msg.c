@@ -278,10 +278,6 @@ static void initiatorTask(uint8_t idCount, int count, uint8_t cir) {
     /* Loop forever initiating ranging exchanges. */
     while (num_initiations < count || count < 0)
     {
-
-        dwt_setrxaftertxdelay(TX_TO_RX_DLY_UUS); /* Sets delay to turn on receiver after a frame transmission has completed 5.52 api */
-        dwt_setrxtimeout(RX_TIMEOUT_UUS); /* Sets the receiver to timeout and disable when no frame is received within the specified time 5.30 api */
-
 	    ++num_initiations;
         if (++id >= idCount)
             id = 0;
@@ -290,6 +286,11 @@ static void initiatorTask(uint8_t idCount, int count, uint8_t cir) {
         sleep_ms(INTER_RANGING_TIME);
 
         memset((void *) &timestamps, 0, sizeof(struct ts_struct));
+
+        // reset radio options
+        dwt_setrxaftertxdelay(TX_TO_RX_DLY_UUS); /* Sets delay to turn on receiver after a frame transmission has completed 5.52 api */
+        dwt_setrxtimeout(RX_TIMEOUT_UUS); /* Sets the receiver to timeout and disable when no frame is received within the specified time 5.30 api */
+
         time = get_system_timestamp_u64();
         delayed_tx_time = next_delayed_tx(time, 2000);
         timestamps.tx_timestamp[0] = delayed_tx_timestamp(delayed_tx_time);
@@ -333,7 +334,7 @@ static void initiatorTask(uint8_t idCount, int count, uint8_t cir) {
             memcpy(&rx2_msg[MSGNO_IDX], &exchangeNo, sizeof(uint8_t));
 
             /* Check that the frame is the expected response from the companion "DS TWR responder" example. */
-            if (memcmp(rx_buffer, rx2_msg, 6) == 0) {
+            if (memcmp(rx_buffer, rx2_msg, 4) == 0) {
                 printf("RESP %u %u received\n", id, exchangeNo);
                 
                 /* Retrieve poll transmission and response reception timestamp. */
@@ -375,7 +376,7 @@ static void initiatorTask(uint8_t idCount, int count, uint8_t cir) {
                 // /* Clear TXFRS event. */
                 // dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_TXFRS);
 
-                dwt_rxenable(DWT_START_RX_IMMEDIATE);
+                // dwt_rxenable(DWT_START_RX_IMMEDIATE);
 
                 /* Poll for reception of a frame or error/timeout. See NOTE 8 below. */
                 while (!((status_reg = dwt_read32bitreg(SYS_STATUS_ID)) & (SYS_STATUS_RXFCG | SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR))) { };
@@ -571,10 +572,10 @@ static void responderTask(uint8_t id, int count, uint8_t cir) {
 
                 printf("RESP %u %u sent\n", id, exchangeNo);
 
-                memset((void *) &rxInfo[0], 0, sizeof(struct completeChannelInfo));
-                copyChannelInfo(&rxInfo[0], exchangeNo);
+                // memset((void *) &rxInfo[0], 0, sizeof(struct completeChannelInfo));
+                // copyChannelInfo(&rxInfo[0], exchangeNo);
 
-                dwt_rxenable(DWT_START_RX_IMMEDIATE);
+                // dwt_rxenable(DWT_START_RX_IMMEDIATE);
 
                 /* Poll for reception of expected "final" frame or error/timeout. See NOTE 8 below. */
                 while (!((status_reg = dwt_read32bitreg(SYS_STATUS_ID)) & (SYS_STATUS_RXFCG | SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR))) { };
@@ -593,7 +594,8 @@ static void responderTask(uint8_t id, int count, uint8_t cir) {
 
                     memcpy((void *) &rx3_msg[ID_IDX], &id, sizeof(uint8_t));
                     memcpy((void *) &rx3_msg[MSGNO_IDX], (void *) &exchangeNo, sizeof(uint8_t));
-                    if (memcmp(rx_buffer, rx3_msg, 6) == 0) {
+
+                    if (memcmp(rx_buffer, rx3_msg, 4) == 0) {
 
                         timestamps.rx_timestamp[2] = get_rx_timestamp_u64();
                         memcpy((void *) &timestamps.rx_timestamp[1], &rx_buffer[RX2_IDX], sizeof(uint64)); // get RX timestamp from message
@@ -617,6 +619,8 @@ static void responderTask(uint8_t id, int count, uint8_t cir) {
                         {
                             printf("REPORT %u %u abandoned\n", id, exchangeNo);
                             continue;
+                        } else {
+                            printf("REPORT %u %u sent\n", id, exchangeNo);
                         }
                         
                         // printf("FINL %u %u received\n", id, exchangeNo);
