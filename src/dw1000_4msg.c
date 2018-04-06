@@ -247,7 +247,7 @@ static void initiatorTask(uint8_t idCount, int count, uint8_t cir) {
     int ret = 0;
     uint64 time = 0;
     uint32 delayed_tx_time = 0;
-    // double tof;
+    double tof;
     float clockOffset;
     struct completeChannelInfo *rxInfo;
     struct ts_struct timestamps;
