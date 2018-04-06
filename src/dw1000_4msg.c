@@ -257,7 +257,7 @@ static void initiatorTask(uint8_t idCount, int count, uint8_t cir) {
     uint8 tx1_msg[] = {0xab, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // size = 1+1+4+8+8+2 = 24
     uint8 rx2_msg[] = {0xab, 0x01, 0, 0, 0, 0}; // actual message size = 1+1+4+8+8+2 = 24
     uint8 tx3_msg[] = {0xab, 0x02, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // size = 1+1+4+8+8+2 = 24
-    uint8 rx4_msg[] = {0xab, 0x04, 0, 0, 0, 0, 0, 0, 0, 0}; // 4 bytes RX3, 1 EX#, 2 CRC
+    uint8 rx4_msg[] = {0xab, 0x04, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // 4 bytes RX3, 1 EX#, 2 CRC
     uint8 rx_buffer[RX_BUF_LEN];
 
     printf("Starting INITIATOR: %u\n", idCount);
@@ -345,6 +345,9 @@ static void initiatorTask(uint8_t idCount, int count, uint8_t cir) {
                 timestamps.tx_timestamp[2] = delayed_tx_timestamp(delayed_tx_time);
 
                 dwt_setdelayedtrxtime(delayed_tx_time);
+                /* Set expected delay and timeout for final message reception. See NOTE 4 and 5 below. */
+                dwt_setrxaftertxdelay(TX_TO_RX_DLY_UUS);
+                dwt_setrxtimeout(RX_TIMEOUT_UUS);
 
                 memcpy((void *) &tx3_msg[ID_IDX], (void *) &id, sizeof(uint8_t));
                 memcpy((void *) &tx3_msg[MSGNO_IDX], (void *) &exchangeNo, sizeof(uint8_t));
@@ -362,39 +365,95 @@ static void initiatorTask(uint8_t idCount, int count, uint8_t cir) {
 
                 printf("FINL %u %u scheduled\n", id, exchangeNo);
 
-                /* Poll DW1000 until TX frame sent event set. See NOTE 9 below. */
-                while (!(dwt_read32bitreg(SYS_STATUS_ID) & SYS_STATUS_TXFRS)) { };
+                // /* Poll DW1000 until TX frame sent event set. See NOTE 9 below. */
+                // while (!(dwt_read32bitreg(SYS_STATUS_ID) & SYS_STATUS_TXFRS)) { };
 
-                /* Clear TXFRS event. */
-                dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_TXFRS);
+                // /* Clear TXFRS event. */
+                // dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_TXFRS);
 
-                /***** Collect and save information *****/
+                /* Poll for reception of a frame or error/timeout. See NOTE 8 below. */
+                while (!((status_reg = dwt_read32bitreg(SYS_STATUS_ID)) & (SYS_STATUS_RXFCG | SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR))) { };
 
-                // clear all previous information
-                memset((void *) rxInfo, 0, sizeof(struct completeChannelInfo));
-                // copy diagnostic and other info
-                copyChannelInfo(rxInfo, exchangeNo);
+                if (status_reg & SYS_STATUS_RXFCG) 
+                {
+                    /* Clear good RX frame event and TX frame sent in the DW1000 status register. */
+                    dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_RXFCG | SYS_STATUS_TXFRS);
 
-                printf("exchange,%u\n",  exchangeNo);
-                printf("TX1,%llu\n", timestamps.tx_timestamp[0]);
-                printf("RX1,%llu\n", timestamps.rx_timestamp[0]);
-                printf("TX2,%llu\n", timestamps.tx_timestamp[1]);
-                printf("RX2,%llu\n", timestamps.rx_timestamp[1]);
-                printf("TX3,%llu\n", timestamps.tx_timestamp[2]);
+                    /* A frame has been received, read it into the local buffer. */
+                    frame_len = dwt_read32bitreg(RX_FINFO_ID) & RX_FINFO_RXFLEN_MASK;
+                    if (frame_len <= RX_BUF_LEN)
+                    {
+                        dwt_readrxdata(rx_buffer, frame_len, 0);
+                    }
 
-                clockOffset = get_clock_offset(rxInfo->carrierintegrator);
-                printf("clockOffset,%f\n", clockOffset);
-
-                snprintf(filename, 31, "exp%u_msg%u_%c.csv", id, exchangeNo, 'I');
-                printf("start writing to %s...\n", filename);
-
-                /***** FILE OPERATIONS *****/
-                //if (cir)
-                //    saveChannelInfoToFile(filename, rxInfo, &timestamps, 3, 1);
+                    // verify MSG
+                    // the exchange number and id in received message should match with original
+                    memcpy(&rx4_msg[ID_IDX], &id, sizeof(uint8_t));
+                    memcpy(&rx4_msg[MSGNO_IDX], &exchangeNo, sizeof(uint8_t));
+                    if (memcmp(rx_buffer, rx4_msg, 6) == 0) {
+                        printf("REPORT %u %u received\n", id, exchangeNo);
                 
-                printf("done writing\n");
-                printf("\n");
-                fflush(stdout);
+                        // copy timestamps to timestamps struct
+                        memcpy((void *) &timestamps.rx_timestamp[2], &rx_buffer[RX3_IDX], sizeof(uint64)); // get TX timestamp from message
+                        
+                        // computation
+                        
+
+                        /***** Collect and save information *****/
+
+                        // clear all previous information
+                        // memset((void *) rxInfo, 0, sizeof(struct completeChannelInfo));
+                        // copy diagnostic and other info
+                        // copyChannelInfo(rxInfo, exchangeNo);
+
+                        printf("exchange,%u\n",  exchangeNo);
+                        printf("TX1,%llu\n", timestamps.tx_timestamp[0]);
+                        printf("RX1,%llu\n", timestamps.rx_timestamp[0]);
+                        printf("TX2,%llu\n", timestamps.tx_timestamp[1]);
+                        printf("RX2,%llu\n", timestamps.rx_timestamp[1]);
+                        printf("TX3,%llu\n", timestamps.tx_timestamp[2]);
+                        printf("RX3,%llu\n", timestamps.rx_timestamp[2]);
+                        
+                        tof = get_ds_tof(&timestamps);
+                        printf("TOF,%f\n", tof*1e9);
+                        printf("dist,%3.2f\n", tof*SPEED_OF_LIGHT);
+
+                        clockOffset = get_clock_offset(rxInfo->carrierintegrator);
+                        printf("clockOffset,%f\n", clockOffset);
+
+                        snprintf(filename, 31, "exp%u_msg%u_%c.csv", id, exchangeNo, 'I');
+                        printf("start writing to %s...\n", filename);
+
+                        /***** FILE OPERATIONS *****/
+                        //if (cir)
+                        //    saveChannelInfoToFile(filename, rxInfo, &timestamps, 3, 1);
+                        
+                        printf("done writing\n");
+                        printf("\n");
+                        fflush(stdout);
+
+
+
+                    } else {
+                        /* Clear RX error/timeout events in the DW1000 status register. */
+                        dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR);
+
+                        /* Probably an ID mismatch */
+                        printf("Received wrong message error\n");
+
+                        /* Reset RX to properly reinitialise LDE operation. */
+                        dwt_rxreset();
+                    }
+                } else {
+
+                    /* Clear RX error/timeout events in the DW1000 status register. */
+                    dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR);
+
+                    printf("REPORT error\n");
+
+                    /* Reset RX to properly reinitialise LDE operation. */
+                    dwt_rxreset();
+                }
             }
         }
         else
