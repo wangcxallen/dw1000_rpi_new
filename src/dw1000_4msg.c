@@ -560,7 +560,7 @@ static void responderTask(uint8_t id, int count, uint8_t cir) {
 
                 dwt_writetxdata(sizeof(tx2_msg), tx2_msg, 0); /* Zero offset in TX buffer. */
                 dwt_writetxfctrl(sizeof(tx2_msg), 0, 1); /* Zero offset in TX buffer, ranging. */
-                ret = dwt_starttx(DWT_START_TX_DELAYED);
+                ret = dwt_starttx(DWT_START_TX_DELAYED | DWT_RESPONSE_EXPECTED);
 
                 /* If dwt_starttx() returns an error, abandon this ranging exchange and proceed to the next one. See NOTE 11 below. */
                 if (ret == DWT_ERROR)
