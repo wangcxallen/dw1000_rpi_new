@@ -55,7 +55,7 @@
 #define PRE_TIMEOUT 8
 
 /* RX timeout for messages in same exchange */
-#define RX_TIMEOUT_UUS      30000
+#define RX_TIMEOUT_UUS      50000
 
 /* UWB microsecond (uus) to device time unit (dtu, around 15.65 ps) conversion factor.
  * 1 uus = 512 / 499.2 µs and 1 µs = 499.2 * 128 dtu. */
