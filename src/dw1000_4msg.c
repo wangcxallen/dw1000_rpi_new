@@ -55,7 +55,7 @@
 #define PRE_TIMEOUT 8
 
 /* RX timeout for messages in same exchange */
-#define RX_TIMEOUT_UUS      50000
+#define RX_TIMEOUT_UUS      30000
 
 /* UWB microsecond (uus) to device time unit (dtu, around 15.65 ps) conversion factor.
  * 1 uus = 512 / 499.2 µs and 1 µs = 499.2 * 128 dtu. */
@@ -591,6 +591,7 @@ static void responderTask(uint8_t id, int count, uint8_t cir) {
                         dwt_readrxdata(rx_buffer, frame_len, 0);
                     }
 
+                    memcpy((void *) &rx3_msg[ID_IDX], &id, sizeof(uint8_t));
                     memcpy((void *) &rx3_msg[MSGNO_IDX], (void *) &exchangeNo, sizeof(uint8_t));
                     if (memcmp(rx_buffer, rx3_msg, 6) == 0) {
 
