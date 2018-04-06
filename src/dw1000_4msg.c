@@ -423,11 +423,11 @@ static void responderTask(uint8_t id, int count, uint8_t cir) {
     uint32 status_reg = 0;
     int rangeCount = 0;
     int ret;
-    double tof;
+    // double tof;
     uint32 delayed_tx_time;
     struct completeChannelInfo *rxInfo;
     struct ts_struct timestamps;
-    char filename[32];
+    // char filename[32];
     
     /* Frames used in the ranging process. See NOTE 2 below. */
     uint8 rx1_msg[] = {0xab, 0x00, id}; // actual size = 1+1+4+8+8+2 = 24
@@ -536,8 +536,8 @@ static void responderTask(uint8_t id, int count, uint8_t cir) {
                         memcpy((void *) &timestamps.tx_timestamp[2], &rx_buffer[TX3_IDX], sizeof(uint64)); // get TX timestamp from message
                         
                         /* Set send time for response to the 4th message */
-                        delayed_tx4_time = next_delayed_tx(timestamps.rx_timestamp[2], RX_TO_TX_DLY_UUS);
-                        dwt_setdelayedtrxtime(delayed_tx4_time);
+                        delayed_tx_time = next_delayed_tx(timestamps.rx_timestamp[2], RX_TO_TX_DLY_UUS);
+                        dwt_setdelayedtrxtime(delayed_tx_time);
                         
                         // Construct FINAL TX Message 
                         memcpy((void *) &tx4_msg[MSGNO_IDX], (void *) &exchangeNo, sizeof(uint8_t));
