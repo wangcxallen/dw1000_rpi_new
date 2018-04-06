@@ -674,7 +674,7 @@ static void responderTask(uint8_t id, int count, uint8_t cir) {
             dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR);
 
             /* Probably an ID mismatch */
-            //printf("RX error\n");
+            printf("RX1 error\n");
 
             /* Reset RX to properly reinitialise LDE operation. */
             dwt_rxreset();
