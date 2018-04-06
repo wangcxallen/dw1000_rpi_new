@@ -411,6 +411,7 @@ static void initiatorTask(uint8_t idCount, int count, uint8_t cir) {
                         // copy diagnostic and other info
                         // copyChannelInfo(rxInfo, exchangeNo);
 
+                        printf("device,%u\n",  id);
                         printf("exchange,%u\n",  exchangeNo);
                         printf("TX1,%llu\n", timestamps.tx_timestamp[0]);
                         printf("RX1,%llu\n", timestamps.rx_timestamp[0]);
