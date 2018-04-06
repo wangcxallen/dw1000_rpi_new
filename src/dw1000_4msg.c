@@ -45,17 +45,17 @@
 
 /* Delay between frames, in UWB microseconds. See NOTE 4 below. */
 /* This is the delay from the end of the frame transmission to the enable of the receiver, as programmed for the DW1000's wait for response feature. */
-#define TX_TO_RX_DLY_UUS    150
+#define TX_TO_RX_DLY_UUS    5000
 
 /* This is the delay from Frame RX timestamp to TX reply timestamp used for calculating/setting the DW1000's delayed TX function. This includes the
  * frame length of approximately 2.66 ms with above configuration. */
-#define RX_TO_TX_DLY_UUS    5000
+#define RX_TO_TX_DLY_UUS    10000
 
 /* Preamble timeout, in multiple of PAC size. See NOTE 6 below. */
 #define PRE_TIMEOUT 8
 
 /* RX timeout for messages in same exchange */
-#define RX_TIMEOUT_UUS      20000
+#define RX_TIMEOUT_UUS      50000
 
 /* UWB microsecond (uus) to device time unit (dtu, around 15.65 ps) conversion factor.
  * 1 uus = 512 / 499.2 µs and 1 µs = 499.2 * 128 dtu. */
