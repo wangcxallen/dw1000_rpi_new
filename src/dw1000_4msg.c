@@ -371,6 +371,8 @@ static void initiatorTask(uint8_t idCount, int count, uint8_t cir) {
                 // /* Clear TXFRS event. */
                 // dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_TXFRS);
 
+                dwt_rxenable(DWT_START_RX_IMMEDIATE);
+
                 /* Poll for reception of a frame or error/timeout. See NOTE 8 below. */
                 while (!((status_reg = dwt_read32bitreg(SYS_STATUS_ID)) & (SYS_STATUS_RXFCG | SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR))) { };
 
@@ -393,12 +395,12 @@ static void initiatorTask(uint8_t idCount, int count, uint8_t cir) {
                     if (memcmp(rx_buffer, rx4_msg, 6) == 0) {
                         printf("REPORT %u %u received\n", id, exchangeNo);
                 
+                        printf("REPORT: %x\n", rx_buffer);
+
                         // copy timestamps to timestamps struct
                         memcpy((void *) &timestamps.rx_timestamp[2], &rx_buffer[RX3_IDX], sizeof(uint64)); // get TX timestamp from message
                         
                         // computation
-                        
-
                         /***** Collect and save information *****/
 
                         // clear all previous information
@@ -613,8 +615,9 @@ static void responderTask(uint8_t id, int count, uint8_t cir) {
                             printf("REPORT %u %u abandoned\n", id, exchangeNo);
                             continue;
                         }
-                        // Restart RESP
 
+                        printf("REPORT: %x\n", tx4_msg);
+                        
                         // printf("FINL %u %u received\n", id, exchangeNo);
 
                         // memset((void *) &rxInfo[1], 0, sizeof(struct completeChannelInfo));
