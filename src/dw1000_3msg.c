@@ -387,8 +387,8 @@ static void initiatorTask(uint8_t idCount, int count, uint8_t cir) {
                 printf("start writing to %s...\n", filename);
 
                 /***** FILE OPERATIONS *****/
-                //if (cir)
-                //    saveChannelInfoToFile(filename, rxInfo, &timestamps, 3, 1);
+                if (cir)
+                    saveChannelInfoToFile(filename, rxInfo, &timestamps, 3, 1);
                 
                 printf("done writing\n");
                 printf("\n");
@@ -554,8 +554,8 @@ static void responderTask(uint8_t id, int count, uint8_t cir) {
                         printf("start writing to %s...\n", filename);
 
                         /***** FILE OPERATIONS *****/
-                        //if (cir)
-                        //    saveChannelInfoToFile(filename, rxInfo, &timestamps, 4, 2);
+                        if (cir)
+                            saveChannelInfoToFile(filename, rxInfo, &timestamps, 4, 2);
                         printf("done writing\n");
                         printf("\n");
                         fflush(stdout);
