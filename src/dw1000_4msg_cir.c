@@ -488,7 +488,7 @@ static void responderTask(uint8_t id, int count, uint8_t cir) {
     uint32 status_reg = 0;
     int rangeCount = 0;
     int ret;
-    // double tof;
+    double tof;
     uint32 delayed_tx_time;
     struct completeChannelInfo *rxInfo;
     struct ts_struct timestamps;
