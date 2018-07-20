@@ -426,10 +426,6 @@ static void initiatorTask(uint32 startCount, int count, uint8_t cir) {
             /* Reset RX to properly reinitialise LDE operation. */
             dwt_rxreset();
         }
-
-        /* Increment frame sequence number after transmission of the poll message (modulo 256). */
-        exchangeNo++;
-
     }
 
     free(rxInfo);
