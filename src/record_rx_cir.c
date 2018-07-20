@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdbool.h>
 
 // DW1000
 #include "deca_device_api.h"
@@ -73,9 +74,12 @@
 /* size of decawave rx buffer*/
 #define RX_BUF_LEN 24
 
+/* Default channel to use for communication */
+#define DEFAULT_CHANNEL 5
+
 /* Default communication configuration. We use here EVK1000's default mode (mode 3). */
 static dwt_config_t config = {
-    5,               /* Channel number. */
+    DEFAULT_CHANNEL,               /* Channel number. */
     DWT_PRF_64M,     /* Pulse repetition frequency. */
     DWT_PLEN_1024,   /* Preamble length. Used in TX only. */
     DWT_PAC32,       /* Preamble acquisition chunk size. Used in RX only. */
@@ -164,7 +168,54 @@ static float get_clock_offset(int32 carrier_offset);
  * @return none
  */
 int main(int argc, char* argv[]) {
-    printf("number of inputs = %d\n", argc);
+
+    bool initiator_flag = 0;
+    bool channel_select_flag = 0;
+    uint8 channel = DEFAULT_CHANNEL;
+    bool output_filename_flag = 0;
+    char* output_filename = NULL;
+    int param_value = 0;
+    int number_required_params = argc;
+
+    while(param_value = getopt(argc, argv, "irc:o:") != -1) {
+        switch(param_value) {
+            case 'i':
+                // setup as initiator
+                initiator_flag = 1;
+                number_required_params = number_required_params - 1;
+                break;
+            case 'r':
+                initiator_flag = 0;
+                number_required_params = number_required_params - 1;
+                break;
+            case 'c':
+                channel_select_flag = 1;
+                channel = optarg;
+                number_required_params = number_required_params - 2;
+                break;
+            case 'o':
+                output_filename_flag = 1;
+                output_filename = optarg;
+                number_required_params = number_required_params - 2;
+                break;
+            default:
+                number_required_params = number_required_params - 1;
+                break;
+        }
+
+        if(initiator_flag) {
+            printf("setting up initiator\n");
+        } else {
+            printf("setting up responder\n");
+        }
+
+        if(channel_select_flag) {
+            printf("custom channel selected: %u", channel);
+        } else {
+
+        }
+    }
+
     return 0;
 }
 
