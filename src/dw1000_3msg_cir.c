@@ -199,12 +199,12 @@ int main(int argc, char* argv[]) {
         } else if (!strcmp(argv[1], "RESP")) {
             mode = 'R';
             cir = 0;
-            count = strtol(argv[3], NULL, 0);
+            count = strtol(argv[2], NULL, 0);
             printf("responder mode without CIR\n");
         } else if (!strcmp(argv[1], "CRESP")) {
             mode = 'D';
             cir = 1;
-            count = strtol(argv[3], NULL, 0);
+            count = strtol(argv[2], NULL, 0);
             printf("responder mode with CIR\n");
         } else {
             mode = 'U';
