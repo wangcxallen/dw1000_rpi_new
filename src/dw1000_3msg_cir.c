@@ -136,8 +136,8 @@ struct ts_struct {
 /***** Function declarations *****/
 
 static void copyCIRToBuffer(uint8 *buffer, uint16 len);
-static void initiatorTask(uint8_t idCount, int count, uint8_t cir);
-static void responderTask(uint8_t id, int count, uint8_t cir);
+static void initiatorTask(uint32 startCount, int count, uint8_t cir);
+static void responderTask(int count, uint8_t cir);
 
 static void setup_dw1000(void);
 static void copyChannelInfo(struct completeChannelInfo *info, uint32 exchange_no);
@@ -153,6 +153,10 @@ static double get_tof(struct ts_struct *timestamps, float clockOffset);
 static double get_ds_tof(struct ts_struct *timestamps);
 static float get_clock_offset(int32 carrier_offset);
 
+void usage(char* name) {
+    printf("usage: %s INIT/CINIT/RESP/CRESP [start number for initializer] count\n", name);
+}
+
 /*! ------------------------------------------------------------------------------------------------------------------
  * @fn main()
  *
@@ -164,34 +168,53 @@ static float get_clock_offset(int32 carrier_offset);
  */
 int main(int argc, char* argv[]) {
     
-    uint8_t id;
+    uint32 start = 0;
     int count;
     char mode;
     uint8_t cir;
     
-    if(argc == 4) {
+    if(argc >= 3) {
         if(!strcmp(argv[1], "INIT")) {
             mode = 'I';
             cir = 0;
+            if(argc == 4) {
+                start = strtoul(argv[2], NULL, 0);
+                count = strtol(argv[3], NULL, 0);
+            } else {
+                usage(argv[0]);
+                exit(1);
+            }
+            printf("initiator mode without CIR\n");
         } else if (!strcmp(argv[1], "CINIT")) {
             mode = 'I';
             cir = 1;
+            if(argc == 4) {
+                start = strtoul(argv[2], NULL, 0);
+                count = strtol(argv[3], NULL, 0);
+            } else {
+                usage(argv[0]);
+                exit(1);
+            }
+            printf("initiator mode with CIR\n");
         } else if (!strcmp(argv[1], "RESP")) {
             mode = 'R';
             cir = 0;
+            count = strtol(argv[3], NULL, 0);
+            printf("responder mode without CIR\n");
         } else if (!strcmp(argv[1], "CRESP")) {
             mode = 'D';
             cir = 1;
+            count = strtol(argv[3], NULL, 0);
+            printf("responder mode with CIR\n");
         } else {
             mode = 'U';
             cir = 0;
             printf("unrecognized mode.\n");
+            usage(argv[0]);
             exit(1);
         }
-        id = (uint8_t)strtoul(argv[2], NULL, 0);
-        count = strtol(argv[3], NULL, 0);
     } else {
-        printf("usage: %s INIT/CINIT/RESP/CRESP id count\n", argv[0]);
+        usage(argv[0]);
         exit(1);
     }
 
@@ -201,10 +224,10 @@ int main(int argc, char* argv[]) {
    
     if(mode == 'I') {
         // Run INITIATOR program
-        initiatorTask(id, count, cir);
+        initiatorTask(start, count, cir);
     } else {
         // Run RESPONDER program
-        responderTask(id, count, cir);
+        responderTask(count, cir);
     }
 
     return 0;
@@ -236,10 +259,9 @@ static void setup_dw1000(void) {
 
 }
 
-static void initiatorTask(uint8_t idCount, int count, uint8_t cir) {
+static void initiatorTask(uint32 startCount, int count, uint8_t cir) {
 
-    uint8_t id = idCount;
-    uint8_t exchangeNo = 0;
+    uint32 exchangeNo;
     int num_initiations = 0;
     uint32 frame_len = 0;
     uint32 status_reg = 0;
@@ -252,13 +274,13 @@ static void initiatorTask(uint8_t idCount, int count, uint8_t cir) {
     struct ts_struct timestamps;
     char filename[32];
     
-    /* Frames used in the ranging process. See NOTE 2 below. */
+    /* Frames used in the ranging process */
     uint8 tx1_msg[] = {0xab, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // size = 1+1+4+8+8+2 = 24
-    uint8 rx2_msg[] = {0xab, 0x01, 0, 0, 0, 0}; // actual message size = 1+1+4+8+8+2 = 24
+    uint8 rx2_msg[] = {0xab, 0x01, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // actual message size = 1+1+4+8+8+2 = 24
     uint8 tx3_msg[] = {0xab, 0x02, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // size = 1+1+4+8+8+2 = 24
     uint8 rx_buffer[RX_BUF_LEN];
 
-    printf("Starting INITIATOR: %u\n", idCount);
+    printf("Starting INITIATOR from message number %lu\n", startCount);
 
     // allocate memory
     rxInfo = (struct completeChannelInfo *) malloc(sizeof(struct completeChannelInfo));
@@ -274,11 +296,13 @@ static void initiatorTask(uint8_t idCount, int count, uint8_t cir) {
     dwt_setrxtimeout(RX_TIMEOUT_UUS); /* Sets the receiver to timeout and disable when no frame is received within the specified time 5.30 api */
 
     /* Loop forever initiating ranging exchanges. */
+
+    exchangeNo = startCount - 1;
+
     while (num_initiations < count || count < 0)
     {
-	++num_initiations;
-        if (++id >= idCount)
-            id = 0;
+	    num_initiations++;
+        exchangeNo++;
 
         /* Execute a delay between ranging exchanges. */
         sleep_ms(INTER_RANGING_TIME);
@@ -290,8 +314,8 @@ static void initiatorTask(uint8_t idCount, int count, uint8_t cir) {
         dwt_setdelayedtrxtime(delayed_tx_time);
 
         /* Write frame data to DW1000 and prepare transmission. See NOTE 8 below. */
-        memcpy((void *) &tx1_msg[ID_IDX], (void *) &id, sizeof(uint8_t));               // copy id number to message buffer
-        memcpy((void *) &tx1_msg[MSGNO_IDX], (void *) &exchangeNo, sizeof(uint8_t));    // copy exchange number to message buffer
+        
+        memcpy((void *) &tx1_msg[MSGNO_IDX], (void *) &exchangeNo, sizeof(uint32));    // copy exchange number to message buffer
         memcpy((void *) &tx1_msg[TX1_IDX], (void *) &timestamps.tx_timestamp[0], sizeof(uint64)); // copy tx timestamp
 
         dwt_writetxdata(sizeof(tx1_msg), tx1_msg, 0); /* Zero offset in TX buffer. */
@@ -302,11 +326,11 @@ static void initiatorTask(uint8_t idCount, int count, uint8_t cir) {
         ret = dwt_starttx(DWT_START_TX_DELAYED | DWT_RESPONSE_EXPECTED);
 
         if (ret == DWT_ERROR) {
-            printf("INIT %u %u aborted\n", id, exchangeNo);
+            printf("INIT %lu aborted\n", exchangeNo);
             continue;
         }
 
-        printf("INIT %u %u scheduled\n", id, exchangeNo);
+        printf("INIT %lu scheduled\n", exchangeNo);
 
         /* We assume that the transmission is achieved correctly, poll for reception of a frame or error/timeout. See NOTE 9 below. */
         while (!((status_reg = dwt_read32bitreg(SYS_STATUS_ID)) & (SYS_STATUS_RXFCG | SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR))) { };
@@ -322,13 +346,12 @@ static void initiatorTask(uint8_t idCount, int count, uint8_t cir) {
                 dwt_readrxdata(rx_buffer, frame_len, 0);
             }
 
-            // the exchange number and id in received message should match with original
-            memcpy(&rx2_msg[ID_IDX], &id, sizeof(uint8_t));
-            memcpy(&rx2_msg[MSGNO_IDX], &exchangeNo, sizeof(uint8_t));
+            // the exchange number and header in received message should match with original. Copy exchange number to 2nd message template for easy comparision.
+            memcpy(&rx2_msg[MSGNO_IDX], &exchangeNo, sizeof(uint32));
 
             /* Check that the frame is the expected response from the companion "DS TWR responder" example. */
             if (memcmp(rx_buffer, rx2_msg, 6) == 0) {
-                printf("RESP %u %u received\n", id, exchangeNo);
+                printf("RESP %lu received\n", exchangeNo);
                 
                 /* Retrieve poll transmission and response reception timestamp. */
                 timestamps.tx_timestamp[0] = get_tx_timestamp_u64();
@@ -344,8 +367,7 @@ static void initiatorTask(uint8_t idCount, int count, uint8_t cir) {
 
                 dwt_setdelayedtrxtime(delayed_tx_time);
 
-                memcpy((void *) &tx3_msg[ID_IDX], (void *) &id, sizeof(uint8_t));
-                memcpy((void *) &tx3_msg[MSGNO_IDX], (void *) &exchangeNo, sizeof(uint8_t));
+                memcpy((void *) &tx3_msg[MSGNO_IDX], (void *) &exchangeNo, sizeof(uint32));
                 memcpy((void *) &tx3_msg[RX1_IDX], (void *) &timestamps.rx_timestamp[1], sizeof(uint64));
                 memcpy((void *) &tx3_msg[TX2_IDX], (void *) &timestamps.tx_timestamp[2], sizeof(uint64));
 
@@ -354,11 +376,11 @@ static void initiatorTask(uint8_t idCount, int count, uint8_t cir) {
                 ret = dwt_starttx(DWT_START_TX_DELAYED);
 
                 if (ret == DWT_ERROR) {
-                    printf("FINL %u %u aborted\n", id, exchangeNo);
+                    printf("FINL %lu aborted\n", exchangeNo);
                     continue;
                 }
 
-                printf("FINL %u %u scheduled\n", id, exchangeNo);
+                printf("FINL %lu scheduled\n", exchangeNo);
 
                 /* Poll DW1000 until TX frame sent event set. See NOTE 9 below. */
                 while (!(dwt_read32bitreg(SYS_STATUS_ID) & SYS_STATUS_TXFRS)) { };
@@ -373,7 +395,7 @@ static void initiatorTask(uint8_t idCount, int count, uint8_t cir) {
                 // copy diagnostic and other info
                 copyChannelInfo(rxInfo, exchangeNo);
 
-                printf("exchange,%u\n",  exchangeNo);
+                printf("exchange,%lu\n",  exchangeNo);
                 printf("TX1,%llu\n", timestamps.tx_timestamp[0]);
                 printf("RX1,%llu\n", timestamps.rx_timestamp[0]);
                 printf("TX2,%llu\n", timestamps.tx_timestamp[1]);
@@ -383,7 +405,7 @@ static void initiatorTask(uint8_t idCount, int count, uint8_t cir) {
                 clockOffset = get_clock_offset(rxInfo->carrierintegrator);
                 printf("clockOffset,%f\n", clockOffset);
 
-                snprintf(filename, 31, "exp%u_msg%u_%c.csv", id, exchangeNo, 'I');
+                snprintf(filename, 31, "exp%u_msg%lu_%c.csv", id, exchangeNo, 'I');
                 printf("start writing to %s...\n", filename);
 
                 /***** FILE OPERATIONS *****/
@@ -414,9 +436,9 @@ static void initiatorTask(uint8_t idCount, int count, uint8_t cir) {
 
 }
 
-static void responderTask(uint8_t id, int count, uint8_t cir) {
+static void responderTask(int count, uint8_t cir) {
 
-    uint8_t exchangeNo;
+    uint32 exchangeNo;
     uint32 frame_len;
     uint32 status_reg = 0;
     int rangeCount = 0;
@@ -428,13 +450,13 @@ static void responderTask(uint8_t id, int count, uint8_t cir) {
     char filename[32];
     
     /* Frames used in the ranging process. See NOTE 2 below. */
-    uint8 rx1_msg[] = {0xab, 0x00, id}; // actual size = 1+1+4+8+8+2 = 24
-    uint8 tx2_msg[] = {0xab, 0x01, id, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // size = 1+1+4+8+8+2 = 24
-    uint8 rx3_msg[] = {0xab, 0x02, id, 0, 0, 0}; // actual size = 1+1+4+8+8+2 = 24
+    uint8 rx1_msg[] = {0xab, 0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // actual size = 1+1+4+8+8+2 = 24
+    uint8 tx2_msg[] = {0xab, 0x01, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // size = 1+1+4+8+8+2 = 24
+    uint8 rx3_msg[] = {0xab, 0x02, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // actual size = 1+1+4+8+8+2 = 24
     uint8 rx_buffer[RX_BUF_LEN]; // same size as rx2
 
     /* RESPONDER */
-    printf("Starting RESPONDER: %u %d\n", id, count);
+    printf("Starting RESPONDER: capturing %d messages\n", count);
 
     memset((void *) &timestamps, 0, sizeof(struct ts_struct));
 
@@ -445,7 +467,7 @@ static void responderTask(uint8_t id, int count, uint8_t cir) {
         exit(1);
     }
 
-    /* Loop forever responding to ranging requests. */
+    /* Loop responding to ranging requests until count is achieved */
     while (rangeCount < count || count < 0) {
 
         memset((void *) &timestamps, 0, sizeof(struct ts_struct));
@@ -468,13 +490,13 @@ static void responderTask(uint8_t id, int count, uint8_t cir) {
                 dwt_readrxdata(rx_buffer, frame_len, 0);
             }
 
-            /* Check that the frame is the correct message by looking at the header. Also verify ID (3rd byte) */
-            if (memcmp((void *)rx_buffer, (void *)rx1_msg, 3) == 0) {
+            /* Check that the frame is the correct message by looking at the header. Capture exchange ID from packet */
+            if (memcmp((void *)rx_buffer, (void *)rx1_msg, 2) == 0) {
 
-                memcpy((void *) &exchangeNo, (void *) &rx_buffer[MSGNO_IDX], sizeof(uint8_t));    // get exchange number
+                memcpy((void *) &exchangeNo, (void *) &rx_buffer[MSGNO_IDX], sizeof(uint32));    // get exchange number
                 memcpy((void *) &timestamps.tx_timestamp[0], &rx_buffer[TX1_IDX], sizeof(uint64)); // get TX timestamp from message
 
-                printf("INIT %u %u received\n", id, exchangeNo);
+                printf("INIT %u received\n", exchangeNo);
                 
                 /* Retrieve poll reception timestamp. */
                 timestamps.rx_timestamp[0] = get_rx_timestamp_u64();
@@ -488,7 +510,7 @@ static void responderTask(uint8_t id, int count, uint8_t cir) {
                 dwt_setrxaftertxdelay(TX_TO_RX_DLY_UUS);
                 dwt_setrxtimeout(RX_TIMEOUT_UUS);
 
-                memcpy((void *) &tx2_msg[MSGNO_IDX], (void *) &exchangeNo, sizeof(uint8_t));
+                memcpy((void *) &tx2_msg[MSGNO_IDX], (void *) &exchangeNo, sizeof(uint32));
                 memcpy((void *) &tx2_msg[RX1_IDX], (void *) &timestamps.rx_timestamp[0], sizeof(uint64));
                 memcpy((void *) &tx2_msg[TX2_IDX], (void *) &timestamps.tx_timestamp[1], sizeof(uint64));
 
@@ -499,14 +521,14 @@ static void responderTask(uint8_t id, int count, uint8_t cir) {
                 /* If dwt_starttx() returns an error, abandon this ranging exchange and proceed to the next one. See NOTE 11 below. */
                 if (ret == DWT_ERROR)
                 {
-                    printf("RESP %u %u abandoned\n", id, exchangeNo);
+                    printf("RESP %u abandoned\n", exchangeNo);
                     continue;
                 }
 
-                printf("RESP %u %u sent\n", id, exchangeNo);
+                printf("RESP %u sent\n", exchangeNo);
 
-                memset((void *) &rxInfo[0], 0, sizeof(struct completeChannelInfo));
-                copyChannelInfo(&rxInfo[0], exchangeNo);
+                // memset((void *) &rxInfo[0], 0, sizeof(struct completeChannelInfo));
+                // copyChannelInfo(&rxInfo[0], exchangeNo);
 
                 dwt_rxenable(DWT_START_RX_IMMEDIATE);
 
@@ -525,19 +547,20 @@ static void responderTask(uint8_t id, int count, uint8_t cir) {
                         dwt_readrxdata(rx_buffer, frame_len, 0);
                     }
 
-                    memcpy((void *) &rx3_msg[MSGNO_IDX], (void *) &exchangeNo, sizeof(uint8_t));
+                    /* check if we got the correct message by comparing header and exchange numbers. Copy exchange number to rx3 message template for easy comparison first. */
+                    memcpy((void *) &rx3_msg[MSGNO_IDX], (void *) &exchangeNo, sizeof(uint32));
                     if (memcmp(rx_buffer, rx3_msg, 6) == 0) {
 
                         timestamps.rx_timestamp[2] = get_rx_timestamp_u64();
                         memcpy((void *) &timestamps.rx_timestamp[1], &rx_buffer[RX2_IDX], sizeof(uint64)); // get RX timestamp from message
                         memcpy((void *) &timestamps.tx_timestamp[2], &rx_buffer[TX3_IDX], sizeof(uint64)); // get TX timestamp from message
                     
-                        printf("FINL %u %u received\n", id, exchangeNo);
+                        printf("FINL %u received\n", exchangeNo);
 
                         memset((void *) &rxInfo[1], 0, sizeof(struct completeChannelInfo));
                         copyChannelInfo(&rxInfo[1], exchangeNo);
 
-                        printf("exchange,%u\n",  exchangeNo);
+                        printf("exchange,%lu\n",  exchangeNo);
                         printf("TX1,%llu\n", timestamps.tx_timestamp[0]);
                         printf("RX1,%llu\n", timestamps.rx_timestamp[0]);
                         printf("TX2,%llu\n", timestamps.tx_timestamp[1]);
@@ -550,7 +573,7 @@ static void responderTask(uint8_t id, int count, uint8_t cir) {
                         printf("TOF,%f\n", tof*1e9);
                         printf("dist,%3.2f\n", tof*SPEED_OF_LIGHT);
 
-                        snprintf(filename, 31, "exp%u_msg%u_%c.csv", id, exchangeNo, 'R');
+                        snprintf(filename, 31, "exp%u_msg%lu_%c.csv", id, exchangeNo, 'R');
                         printf("start writing to %s...\n", filename);
 
                         /***** FILE OPERATIONS *****/
