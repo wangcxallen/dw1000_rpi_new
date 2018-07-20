@@ -3,10 +3,10 @@ LDFLAGS+=-lpthread -lm -lwiringPi
 
 dw1000-objs := platform.o deca_device.o deca_params_init.o
 
-all: clean dw1000_tx dw1000_rx dw1000_rx_cir dw1000_twr_resp dw1000_2msg dw1000_3msg dw1000_4msg dw1000_4msg_cir
+all: clean dw1000_tx dw1000_rx dw1000_rx_cir dw1000_twr_resp dw1000_2msg dw1000_3msg dw1000_4msg dw1000_3msg_cir dw1000_4msg_cir
 
 clean:
-	rm -f clean dw1000_tx dw1000_rx dw1000_rx_cir dw1000_twr_resp dw1000_2msg dw1000_3msg dw1000_4msg dw1000_4msg_cir *.o
+	rm -f clean dw1000_tx dw1000_rx dw1000_rx_cir dw1000_twr_resp dw1000_2msg dw1000_3msg dw1000_4msg dw1000_3msg_cir dw1000_4msg_cir *.o
 
 dw1000_tx: dw1000_tx.o $(dw1000-objs)
 	gcc $(CFLAGS) -o $@ $^ $(LDFLAGS)
@@ -33,6 +33,9 @@ dw1000_4msg: dw1000_4msg.o $(dw1000-objs)
 
 # record_rx_cir: record_rx_cir.o $(dw1000-objs)
 # 	gcc $(CFLAGS) -o $@ $^ $(LDFLAGS)
+
+dw1000_3msg_cir: dw1000_3msg_cir.o $(dw1000-objs)
+	gcc $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 dw1000_4msg_cir: dw1000_4msg_cir.o $(dw1000-objs)
 	gcc $(CFLAGS) -o $@ $^ $(LDFLAGS)
