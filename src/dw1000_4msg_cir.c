@@ -32,7 +32,7 @@
 #include "platform.h"
 
 /* Example application name and version to display on LCD screen. */
-#define APP_NAME "2MSG w/CIR v1.0"
+#define APP_NAME "4 message ranging with CIR v1.0"
 
 /***** USEFUL PARAMETERS *****/
 
@@ -174,13 +174,13 @@ int main(int argc, char* argv[]) {
         if(!strcmp(argv[1], "INIT")) {
             mode = 'I';
             cir = 0;
-        } else if (!strcmp(argv[1], "INITC")) {
+        } else if (!strcmp(argv[1], "CINIT")) {
             mode = 'I';
             cir = 1;
         } else if (!strcmp(argv[1], "RESP")) {
             mode = 'R';
             cir = 0;
-        } else if (!strcmp(argv[1], "RESPC")) {
+        } else if (!strcmp(argv[1], "CRESP")) {
             mode = 'D';
             cir = 1;
         } else {
@@ -192,7 +192,7 @@ int main(int argc, char* argv[]) {
         id = (uint8_t)strtoul(argv[2], NULL, 0);
         count = strtol(argv[3], NULL, 0);
     } else {
-        printf("usage: %s INIT/RESP id count\n", argv[0]);
+        printf("usage: %s INIT/CINIT/RESP/CRESP id count\n", argv[0]);
         exit(1);
     }
 
@@ -407,9 +407,9 @@ static void initiatorTask(uint8_t idCount, int count, uint8_t cir) {
                         /***** Collect and save information *****/
 
                         // clear all previous information
-                        // memset((void *) rxInfo, 0, sizeof(struct completeChannelInfo));
+                        memset((void *) rxInfo, 0, sizeof(struct completeChannelInfo));
                         // copy diagnostic and other info
-                        // copyChannelInfo(rxInfo, exchangeNo);
+                        copyChannelInfo(rxInfo, exchangeNo);
 
                         printf("device,%u\n",  id);
                         printf("exchange,%u\n",  exchangeNo);
@@ -431,8 +431,8 @@ static void initiatorTask(uint8_t idCount, int count, uint8_t cir) {
                         printf("start writing to %s...\n", filename);
 
                         /***** FILE OPERATIONS *****/
-                        //if (cir)
-                        //    saveChannelInfoToFile(filename, rxInfo, &timestamps, 3, 1);
+                        if (cir)
+                           saveChannelInfoToFile(filename, rxInfo, &timestamps, 3, 1);
                         
                         printf("done writing\n");
                         printf("\n");
@@ -492,7 +492,7 @@ static void responderTask(uint8_t id, int count, uint8_t cir) {
     uint32 delayed_tx_time;
     struct completeChannelInfo *rxInfo;
     struct ts_struct timestamps;
-    // char filename[32];
+    char filename[32];
     
     /* Frames used in the ranging process. See NOTE 2 below. */
     uint8 rx1_msg[] = {0xab, 0x00, id}; // actual size = 1+1+4+8+8+2 = 24
@@ -573,8 +573,8 @@ static void responderTask(uint8_t id, int count, uint8_t cir) {
 
                 printf("RESP %u %u sent\n", id, exchangeNo);
 
-                // memset((void *) &rxInfo[0], 0, sizeof(struct completeChannelInfo));
-                // copyChannelInfo(&rxInfo[0], exchangeNo);
+                memset((void *) &rxInfo[0], 0, sizeof(struct completeChannelInfo));
+                copyChannelInfo(&rxInfo[0], exchangeNo);
 
                 // dwt_rxenable(DWT_START_RX_IMMEDIATE);
 
@@ -626,32 +626,32 @@ static void responderTask(uint8_t id, int count, uint8_t cir) {
                         
                         // printf("FINL %u %u received\n", id, exchangeNo);
 
-                        // memset((void *) &rxInfo[1], 0, sizeof(struct completeChannelInfo));
-                        // copyChannelInfo(&rxInfo[1], exchangeNo);
+                        memset((void *) &rxInfo[1], 0, sizeof(struct completeChannelInfo));
+                        copyChannelInfo(&rxInfo[1], exchangeNo);
 
-                        // printf("exchange,%u\n",  exchangeNo);
-                        // printf("TX1,%llu\n", timestamps.tx_timestamp[0]);
-                        // printf("RX1,%llu\n", timestamps.rx_timestamp[0]);
-                        // printf("TX2,%llu\n", timestamps.tx_timestamp[1]);
-                        // printf("RX2,%llu\n", timestamps.rx_timestamp[1]);
-                        // printf("TX3,%llu\n", timestamps.tx_timestamp[2]);
-                        // printf("RX3,%llu\n", timestamps.rx_timestamp[2]);
+                        printf("exchange,%u\n",  exchangeNo);
+                        printf("TX1,%llu\n", timestamps.tx_timestamp[0]);
+                        printf("RX1,%llu\n", timestamps.rx_timestamp[0]);
+                        printf("TX2,%llu\n", timestamps.tx_timestamp[1]);
+                        printf("RX2,%llu\n", timestamps.rx_timestamp[1]);
+                        printf("TX3,%llu\n", timestamps.tx_timestamp[2]);
+                        printf("RX3,%llu\n", timestamps.rx_timestamp[2]);
 
-                        // tof = get_ds_tof(&timestamps);
-                        // printChannelInfo(&rxInfo[1]);
+                        tof = get_ds_tof(&timestamps);
+                        printChannelInfo(&rxInfo[1]);
                         
-                        // printf("TOF,%f\n", tof*1e9);
-                        // printf("dist,%3.2f\n", tof*SPEED_OF_LIGHT); // send distance!
+                        printf("TOF,%f\n", tof*1e9);
+                        printf("dist,%3.2f\n", tof*SPEED_OF_LIGHT); // send distance!
 
-                        // snprintf(filename, 31, "exp%u_msg%u_%c.csv", id, exchangeNo, 'R');
-                        // printf("start writing to %s...\n", filename);
+                        snprintf(filename, 31, "exp%u_msg%u_%c.csv", id, exchangeNo, 'R');
+                        printf("start writing to %s...\n", filename);
 
-                        // /***** FILE OPERATIONS *****/
-                        // //if (cir)
-                        // //    saveChannelInfoToFile(filename, rxInfo, &timestamps, 4, 2);
-                        // printf("done writing\n");
-                        // printf("\n");
-                        // fflush(stdout);
+                        /***** FILE OPERATIONS *****/
+                        if (cir)
+                           saveChannelInfoToFile(filename, rxInfo, &timestamps, 4, 2);
+                        printf("done writing\n");
+                        printf("\n");
+                        fflush(stdout);
 
                         // Sending TOF
 
