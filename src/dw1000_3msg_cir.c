@@ -405,7 +405,7 @@ static void initiatorTask(uint32 startCount, int count, uint8_t cir) {
                 clockOffset = get_clock_offset(rxInfo->carrierintegrator);
                 printf("clockOffset,%f\n", clockOffset);
 
-                snprintf(filename, 31, "exp%u_msg%lu_%c.csv", id, exchangeNo, 'I');
+                snprintf(filename, 31, "msg%lu_%c.csv", exchangeNo, 'I');
                 printf("start writing to %s...\n", filename);
 
                 /***** FILE OPERATIONS *****/
@@ -496,7 +496,7 @@ static void responderTask(int count, uint8_t cir) {
                 memcpy((void *) &exchangeNo, (void *) &rx_buffer[MSGNO_IDX], sizeof(uint32));    // get exchange number
                 memcpy((void *) &timestamps.tx_timestamp[0], &rx_buffer[TX1_IDX], sizeof(uint64)); // get TX timestamp from message
 
-                printf("INIT %u received\n", exchangeNo);
+                printf("INIT %lu received\n", exchangeNo);
                 
                 /* Retrieve poll reception timestamp. */
                 timestamps.rx_timestamp[0] = get_rx_timestamp_u64();
@@ -521,11 +521,11 @@ static void responderTask(int count, uint8_t cir) {
                 /* If dwt_starttx() returns an error, abandon this ranging exchange and proceed to the next one. See NOTE 11 below. */
                 if (ret == DWT_ERROR)
                 {
-                    printf("RESP %u abandoned\n", exchangeNo);
+                    printf("RESP %lu abandoned\n", exchangeNo);
                     continue;
                 }
 
-                printf("RESP %u sent\n", exchangeNo);
+                printf("RESP %lu sent\n", exchangeNo);
 
                 // memset((void *) &rxInfo[0], 0, sizeof(struct completeChannelInfo));
                 // copyChannelInfo(&rxInfo[0], exchangeNo);
@@ -555,7 +555,7 @@ static void responderTask(int count, uint8_t cir) {
                         memcpy((void *) &timestamps.rx_timestamp[1], &rx_buffer[RX2_IDX], sizeof(uint64)); // get RX timestamp from message
                         memcpy((void *) &timestamps.tx_timestamp[2], &rx_buffer[TX3_IDX], sizeof(uint64)); // get TX timestamp from message
                     
-                        printf("FINL %u received\n", exchangeNo);
+                        printf("FINL %lu received\n", exchangeNo);
 
                         memset((void *) &rxInfo[1], 0, sizeof(struct completeChannelInfo));
                         copyChannelInfo(&rxInfo[1], exchangeNo);
@@ -573,7 +573,7 @@ static void responderTask(int count, uint8_t cir) {
                         printf("TOF,%f\n", tof*1e9);
                         printf("dist,%3.2f\n", tof*SPEED_OF_LIGHT);
 
-                        snprintf(filename, 31, "exp%u_msg%lu_%c.csv", id, exchangeNo, 'R');
+                        snprintf(filename, 31, "msg%lu_%c.csv", exchangeNo, 'R');
                         printf("start writing to %s...\n", filename);
 
                         /***** FILE OPERATIONS *****/
