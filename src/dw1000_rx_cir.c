@@ -125,10 +125,43 @@ void copyCIRToBuffer(uint8 *buffer, uint16 len)
     }
 }
 
+void saveInfoToFile(char *filename, uint64 time, uint8 *cir, dwt_rxdiag_t *diagnostics)
+{
+    FILE *output_file;
+    int i;
+    
+    output_file = fopen(filename, "w");
+    if (output_file == NULL){
+        printf("unable to write\n");
+    }
+    else {
+        
+        fprintf(output_file, "timestamp, %llu\n", time);
+        
+        fprintf(output_file, "maxNoise,%u\n", diagnostics->maxNoise);
+        fprintf(output_file, "stdNoise,%u\n", diagnostics->stdNoise);
+        fprintf(output_file, "firstPath,%u\n", diagnostics->firstPath);
+        fprintf(output_file, "firstPathAmp1,%u\n", diagnostics->firstPathAmp1);
+        fprintf(output_file, "firstPathAmp2,%u\n", diagnostics->firstPathAmp2);
+        fprintf(output_file, "firstPathAmp3,%u\n", diagnostics->firstPathAmp3);
+        fprintf(output_file, "maxGrowthCIR,%u\n", diagnostics->maxGrowthCIR);
+        fprintf(output_file, "rxPreamCount,%u\n", diagnostics->rxPreamCount);
+        
+        fprintf(output_file, "CIRIQ\n");
+        for (i = 0; i < CIR_SAMPLES; i++)
+        {
+            fprintf(output_file, "%%04X,%%04X\n", cir[i].real, cir[i].img);//%d
+        }
+        
+        fclose(output_file);
+        printf("Saving successful");
+    }
+}
+
 /**
  * Application entry point.
  */
-int main(int nargs, char** args)
+int main(void)
 {
     uint64 time = 0;
     uint8 *cir_buffer;
@@ -163,10 +196,12 @@ int main(int nargs, char** args)
     dwt_configure(&config);
 
     printf("%s\r\n", APP_NAME);
-
+    
+    int sampletime = 0;
     /* Loop forever receiving frames. */
-    while (1)
+    while (samlpetime<1)
     {
+        sampletime++;
 
         /* TESTING BREAKPOINT LOCATION #1 */
 
@@ -235,7 +270,10 @@ int main(int nargs, char** args)
             {
                  printf("%04X ", cir[i].img);
             }
-
+            
+            snprintf(filename, 31, "time_%llu.csv", time);
+            saveInfoToFile(filename, time, cir, &diagnostics);
+            
             printf("\n");
         }
         else
@@ -247,7 +285,8 @@ int main(int nargs, char** args)
             dwt_rxreset();
         }
     }
-
+    
+    printf("End sample\n");
     cir = NULL;
     free(cir_buffer);
 }
