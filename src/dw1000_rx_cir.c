@@ -199,7 +199,7 @@ int main(void)
     
     int sampletime = 0;
     /* Loop forever receiving frames. */
-    while (samlpetime<1)
+    while (sampletime<1)
     {
         sampletime++;
 
@@ -271,6 +271,7 @@ int main(void)
                  printf("%04X ", cir[i].img);
             }
             
+            char filename[32];
             snprintf(filename, 31, "time_%llu.csv", time);
             saveInfoToFile(filename, time, cir, &diagnostics);
             
