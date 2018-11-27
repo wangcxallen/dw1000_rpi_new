@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <stdlib.h> // malloc, free
 #include <unistd.h>
+#include <stdint.h>
 #include <string.h> // memset
 
 #include "deca_device_api.h"
@@ -33,7 +34,7 @@
 #include "platform.h"
 
 /* Example application name and version to display on LCD screen. */
-#define APP_NAME "RX DIAG v1.1"
+#define APP_NAME "HEADCOUNT RX v1.0"
 
 /* Default communication configuration. We use here EVK1000's default mode (mode 3). */
 static dwt_config_t config = {
@@ -53,7 +54,8 @@ static dwt_rxdiag_t diagnostics;
 
 /* Buffer to store received frame. See NOTE 1 below. */
 #define FRAME_LEN_MAX 127
-static uint8 rx_buffer[FRAME_LEN_MAX];
+#define RX_BUF_LEN 12
+static uint8 rx_buffer[RX_BUF_LEN];
 
 /* Hold copy of status register state here for reference so that it can be examined at a debug breakpoint. */
 static uint32 status_reg = 0;
@@ -64,6 +66,9 @@ static uint16 frame_len = 0;
 // 992 samples for 16MHz PRF - 3968 bytes
 // 1016 samples for 64MHz PRF - 4064 bytes
 #define CIR_SAMPLES 100 //1016
+
+typedef unsigned long long uint64;
+typedef signed long long int64;
 
 struct cir_tap_struct {
     uint16 real;
@@ -124,7 +129,7 @@ void copyCIRToBuffer(uint8 *buffer, uint16 len)
  */
 int main(int nargs, char** args)
 {
-
+    uint64 time = 0;
     uint8 *cir_buffer;
     int i;
 
@@ -168,13 +173,14 @@ int main(int nargs, char** args)
          * the RX buffer.
          * This is a good place to put a breakpoint. Here (after first time through the loop) the local status register will be set for last event
          * and if a good receive has happened the data buffer will have the data in it, and frame_len will be set to the length of the RX frame. */
-        for (i = 0 ; i < FRAME_LEN_MAX; i++ )
+        for (i = 0 ; i < RX_BUF_LEN; i++ )
         {
             rx_buffer[i] = 0;
         }
 
         // clear cir_buffer before next sampling
         memset((void *) cir_buffer, 0, 4*CIR_SAMPLES);
+        memset((void *) &time, 0, 8);   //may go wrong
 
         diagnostics.firstPath = 0;
         diagnostics.firstPathAmp1 = 0;
@@ -201,29 +207,20 @@ int main(int nargs, char** args)
 
             /* A frame has been received, copy it to our local buffer. */
             frame_len = dwt_read32bitreg(RX_FINFO_ID) & RX_FINFO_RXFL_MASK_1023;
-            if (frame_len <= FRAME_LEN_MAX)
+            if (frame_len <= RX_BUF_LEN)
             {
                 dwt_readrxdata(rx_buffer, frame_len, 0);
             }
-   
-            printf("MSG Received! DATA: %s\r\n", rx_buffer);
-
+            /*  Get timestamp to our local buffer. */
+            memcpy((void *) &time, (void *) &rx_buffer[TS_IDX], sizeof(uint64));
+            printf("MSG Received! DATA: %llu\r\n", time);
+            
+            /*  Get diagnostic to our local buffer. */
             dwt_readdiagnostics(&diagnostics);
             printf("FP: %d, STD_NOISE: %d, MAX_NOISE: %d \r\n", diagnostics.firstPath, diagnostics.stdNoise, diagnostics.maxNoise);
-
-            // uint16 fp_int = diagnostics.firstPath / 64;
-            //dwt_readaccdata((uint8 *)&cir, CIR_SAMPLES, (fp_int - 2) * 4);
-            // dwt_readaccdata((uint8 *) cir_buffer, 4*CIR_SAMPLES + 1, 0);
-
+            
+            /*  Get CIR to our local buffer. */
             copyCIRToBuffer((uint8 *) cir_buffer, 4*CIR_SAMPLES);
-
-            // Print CIR
-
-            // printf("CIR Bytes:");
-            // for(i = 0; i < 4*CIR_SAMPLES + 1; i++)
-            // {
-            //     printf("%01X", cir_buffer[i]);
-            // }
 
             printf("CIR Real: ");
             for (i = 0; i < CIR_SAMPLES; i++)
