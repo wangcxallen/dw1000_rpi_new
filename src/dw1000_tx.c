@@ -100,10 +100,12 @@ int main(void)
     dwt_setleds(0b00000011);
 
     printf("%s\n", APP_NAME);
-
+    
+    int sampletime = 0;
     /* Loop forever sending frames periodically. */
-    while(1)
+    while(sampletime<1)
     {
+        sampletime++;
         /* Get tx_timestamp */
         time = get_system_timestamp_u64();
         
