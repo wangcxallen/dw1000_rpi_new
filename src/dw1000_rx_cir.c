@@ -125,7 +125,7 @@ void copyCIRToBuffer(uint8 *buffer, uint16 len)
     }
 }
 
-void saveInfoToFile(char *filename, uint64 time, uint8 *cir, dwt_rxdiag_t *diagnostics)
+void saveInfoToFile(char *filename, uint64 time, struct cir_tap_struct *cir, dwt_rxdiag_t *diagnostics)
 {
     FILE *output_file;
     int i;
