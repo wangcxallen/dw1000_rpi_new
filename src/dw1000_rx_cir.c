@@ -150,7 +150,7 @@ void saveInfoToFile(char *filename, uint64 time, struct cir_tap_struct *cir, dwt
         fprintf(output_file, "CIRIQ\n");
         for (i = 0; i < CIR_SAMPLES; i++)
         {
-            fprintf(output_file, "%%04X,%%04X\n", cir[i].real, cir[i].img);//%d
+            fprintf(output_file, "%04X,%04X\n", cir[i].real, cir[i].img);//%d
         }
         
         fclose(output_file);
