@@ -53,6 +53,7 @@ static dwt_config_t config = {
 static dwt_rxdiag_t diagnostics;
 
 /* Buffer to store received frame. See NOTE 1 below. */
+#define TS_IDX   2 
 #define FRAME_LEN_MAX 127
 #define RX_BUF_LEN 12
 static uint8 rx_buffer[RX_BUF_LEN];
