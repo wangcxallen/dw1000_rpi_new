@@ -201,6 +201,7 @@ int main(void)
     /* Loop forever receiving frames. */
     while (sampletime<1)
     {
+        printf("start sample");
         sampletime++;
 
         /* TESTING BREAKPOINT LOCATION #1 */
