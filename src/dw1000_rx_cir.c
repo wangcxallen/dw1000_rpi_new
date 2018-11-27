@@ -201,7 +201,7 @@ int main(void)
     /* Loop forever receiving frames. */
     while (sampletime<1)
     {
-        printf("start sample");
+        printf("start sample\n");
         sampletime++;
 
         /* TESTING BREAKPOINT LOCATION #1 */
@@ -228,7 +228,9 @@ int main(void)
         diagnostics.maxNoise = 0;
         diagnostics.stdNoise = 0;
 
+        /* Set timeout. */
         /* Activate reception immediately. See NOTE 3 below. */
+        dwt_setrxtimeout(0);
         dwt_rxenable(DWT_START_RX_IMMEDIATE);
 
         /* Poll until a frame is properly received or an error/timeout occurs. See NOTE 4 below.
