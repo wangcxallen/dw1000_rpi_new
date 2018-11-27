@@ -127,7 +127,7 @@ int main(void)
         dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_TXFRS);
 
         /* Execute a delay between transmissions. */
-        sleep_ms(TX_DELAY_MS);
+//        sleep_ms(TX_DELAY_MS);
 
         /* Increment the blink frame sequence number (modulo 256). */
         tx_msg[BLINK_FRAME_SN_IDX]++;
