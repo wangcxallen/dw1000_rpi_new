@@ -21,6 +21,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdint.h>
+#include <string.h>
 
 #include "deca_device_api.h"
 #include "deca_regs.h"
@@ -43,18 +45,16 @@ static dwt_config_t config = {
     (1025 + 64 - 32) /* SFD timeout (preamble length + 1 + SFD length - PAC size). Used in RX only. */
 };
 
-/* The frame sent in this example is an 802.15.4e standard blink. It is a 12-byte frame composed of the following fields:
- *     - byte 0: frame type (0xC5 for a blink).
- *     - byte 1: sequence number, incremented for each new frame.
- *     - byte 2 -> 9: device ID, see NOTE 1 below.
- *     - byte 10/11: frame check-sum, automatically set by DW1000.  */
-static uint8 tx_msg[] = {0xC5, 0, 'D', 'E', 'C', 'A', 'W', 'A', 'V', 'E', 0, 0};
+
 /* Index to access to sequence number of the blink frame in the tx_msg array. */
 #define BLINK_FRAME_SN_IDX 1   //not used
 #define TS_IDX   2   // time_stamp index
 
 /* Inter-frame delay period, in milliseconds. */
 #define TX_DELAY_MS 2000
+
+typedef unsigned long long uint64;
+typedef signed long long int64;
 
 /***** Function declarations *****/
 
