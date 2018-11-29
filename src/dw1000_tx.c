@@ -108,7 +108,7 @@ int main(void)
     {
         sampletime++;
         /* Get tx_timestamp */
-        time_now = get_system_timestamp_u64;
+        time_now = time(NULL);
         
         memcpy((void *) &tx_msg[TS_IDX], (void *) &time_now, sizeof(uint64)); // copy tx timestamp
         /* Write frame data to DW1000 and prepare transmission. See NOTE 4 below.*/
