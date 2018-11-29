@@ -72,7 +72,7 @@ int main(void)
     uint32 frame_len = 0;
     uint32 status_reg = 0;
     int ret = 0;
-    uint64 time = 0;
+    uint64 time_now = 0;
     
     /* The frame sent in this example is adjusted from an 802.15.4e standard blink. It is a 12-byte frame composed of the following fields:
      *     - byte 0: frame type (0xC5 for a blink).
@@ -108,9 +108,9 @@ int main(void)
     {
         sampletime++;
         /* Get tx_timestamp */
-        time = time(NULL);
+        time = get_system_timestamp_u64;
         
-        memcpy((void *) &tx_msg[TS_IDX], (void *) &time, sizeof(uint64)); // copy tx timestamp
+        memcpy((void *) &tx_msg[TS_IDX], (void *) &time_now, sizeof(uint64)); // copy tx timestamp
         /* Write frame data to DW1000 and prepare transmission. See NOTE 4 below.*/
         dwt_writetxdata(sizeof(tx_msg), tx_msg, 0); /* Zero offset in TX buffer. */
         dwt_writetxfctrl(sizeof(tx_msg), 0, 0); /* Zero offset in TX buffer, no ranging. */
@@ -134,7 +134,7 @@ int main(void)
         tx_msg[BLINK_FRAME_SN_IDX]++;
 
         /* How to print uint8??????? */
-        printf("MSG SENT! Time: %ld\n", time);
+        printf("MSG SENT! Time: %ld\n", time_now);
     }
 }
 
