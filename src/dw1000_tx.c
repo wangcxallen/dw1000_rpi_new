@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <stdint.h>
 #include <string.h>
+#include <time.h>
 
 #include "deca_device_api.h"
 #include "deca_regs.h"
