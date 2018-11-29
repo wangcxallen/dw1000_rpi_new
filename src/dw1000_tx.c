@@ -134,7 +134,7 @@ int main(void)
         tx_msg[BLINK_FRAME_SN_IDX]++;
 
         /* How to print uint8??????? */
-        printf("MSG SENT! Time: %ld\n", time_now);
+        printf("MSG SENT! Time: %llu\n", time_now);
     }
 }
 
