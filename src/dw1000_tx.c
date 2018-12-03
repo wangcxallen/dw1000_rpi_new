@@ -130,11 +130,11 @@ int main(void)
         /* Execute a delay between transmissions. */
 //        sleep_ms(TX_DELAY_MS);
 
+        /* How to print uint8??????? */
+        printf("%i MSG SENT! Time: %llu\n", int(tx_msg[BLINK_FRAME_SN_IDX]), time_now);
+        
         /* Increment the blink frame sequence number (modulo 256). */
         tx_msg[BLINK_FRAME_SN_IDX]++;
-
-        /* How to print uint8??????? */
-        printf("MSG SENT! Time: %llu\n", time_now);
     }
 }
 

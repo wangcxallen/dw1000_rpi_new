@@ -53,6 +53,7 @@ static dwt_config_t config = {
 static dwt_rxdiag_t diagnostics;
 
 /* Buffer to store received frame. See NOTE 1 below. */
+#define BLINK_FRAME_SN_IDX 1
 #define TS_IDX   2 
 #define FRAME_LEN_MAX 127
 #define RX_BUF_LEN 12
@@ -164,6 +165,7 @@ void saveInfoToFile(char *filename, uint64 time, struct cir_tap_struct *cir, dwt
 int main(void)
 {
     uint64 time = 0;
+    uint8 squence_num = 0;
     uint8 *cir_buffer;
     int i;
 
@@ -251,8 +253,9 @@ int main(void)
                 dwt_readrxdata(rx_buffer, frame_len, 0);
             }
             /*  Get timestamp to our local buffer. */
+            memcpy((void *) &squence_num, (void *) &rx_buffer[BLINK_FRAME_SN_IDX], sizeof(uint8));
             memcpy((void *) &time, (void *) &rx_buffer[TS_IDX], sizeof(uint64));
-            printf("MSG Received! DATA: %llu\r\n", time);
+            printf("%i MSG Received! DATA: %llu\r\n", int(squence_num), time);
             
             /*  Get diagnostic to our local buffer. */
             dwt_readdiagnostics(&diagnostics);
