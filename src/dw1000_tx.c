@@ -66,7 +66,7 @@ static uint64 get_system_timestamp_u64(void);
 /**
  * Application entry point.
  */
-int main(void)
+int main(uint8 squence_num=0)
 {
     uint32 exchangeNo = 0;
     uint32 frame_len = 0;
@@ -111,6 +111,8 @@ int main(void)
         time_now = time(NULL);
         
         memcpy((void *) &tx_msg[TS_IDX], (void *) &time_now, sizeof(uint64)); // copy tx timestamp
+        memcpy((void *) &tx_msg[BLINK_FRAME_SN_IDX], (void *) &squence_num, sizeof(uint8));
+        
         /* Write frame data to DW1000 and prepare transmission. See NOTE 4 below.*/
         dwt_writetxdata(sizeof(tx_msg), tx_msg, 0); /* Zero offset in TX buffer. */
         dwt_writetxfctrl(sizeof(tx_msg), 0, 0); /* Zero offset in TX buffer, no ranging. */
@@ -131,10 +133,7 @@ int main(void)
 //        sleep_ms(TX_DELAY_MS);
 
         /* How to print uint8??????? */
-        printf("%i MSG SENT! Time: %llu\n", int(tx_msg[BLINK_FRAME_SN_IDX]), time_now);
-        
-        /* Increment the blink frame sequence number (modulo 256). */
-        tx_msg[BLINK_FRAME_SN_IDX]++;
+        printf("%u MSG SENT! Time: %llu\n", squence_num, time_now);
     }
 }
 

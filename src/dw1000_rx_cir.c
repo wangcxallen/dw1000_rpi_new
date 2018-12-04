@@ -255,7 +255,7 @@ int main(void)
             /*  Get timestamp to our local buffer. */
             memcpy((void *) &squence_num, (void *) &rx_buffer[BLINK_FRAME_SN_IDX], sizeof(uint8));
             memcpy((void *) &time, (void *) &rx_buffer[TS_IDX], sizeof(uint64));
-            printf("%i MSG Received! DATA: %llu\r\n", int(squence_num), time);
+            printf("%u MSG Received! DATA: %llu\r\n", squence_num, time);
             
             /*  Get diagnostic to our local buffer. */
             dwt_readdiagnostics(&diagnostics);
