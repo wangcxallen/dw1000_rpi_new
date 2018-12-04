@@ -68,7 +68,7 @@ static uint64 get_system_timestamp_u64(void);
  */
 int main(void)
 {
-    uint8 squence_num=0
+    uint8 squence_num=0;
     uint32 exchangeNo = 0;
     uint32 frame_len = 0;
     uint32 status_reg = 0;
